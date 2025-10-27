@@ -141,7 +141,7 @@
 ## History Log
 - 2025-10-22 — Initial AGENT.md created from v1.0 specification set; established shadcn/ui as mandatory UI layer and recorded legacy remediation items.
 - 2025-10-23 — Evaluated TypeScript 풀스택 옵션(Next.js + tRPC + Prisma + PostgreSQL + Redis + NextAuth)과 관리자 워크스페이스 초기 범위를 확정.
-- 2025-10-23 — Initialized Git repository using separate `.gitdir` store (workspace is `/Users/c2/Documents/Personal/shinchon-project`) and added base project docs/configs.
+- 2025-10-23 — Initialized Git repository using separate `.gitdir` store (workspace is `/Users/c2/Documents/Personal/shinchon-saessaks`) and added base project docs/configs.
 - 2025-10-23 — Added Prettier configuration (`.prettierrc`) with shared formatting rules (tabs, width 120, trailing commas, etc.).
 - 2025-10-23 — Scaffolded Next.js project at repo root (TypeScript, Tailwind, ESLint, npm) and verified with `npm run lint`.
 - 2025-10-23 — Initialized shadcn/ui CLI, added core components (button, card, badge, tabs, table, input, textarea, label), created `/styleguide` preview page, and restructured project to live at root for simpler layout.

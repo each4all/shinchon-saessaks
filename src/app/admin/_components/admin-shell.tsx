@@ -8,6 +8,7 @@ import {
 	Database,
 	FileText,
 	LayoutDashboard,
+	LogOut,
 	MessagesSquare,
 	Newspaper,
 	Plus,
@@ -15,6 +16,8 @@ import {
 	Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import type { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,8 +64,23 @@ const NAV_SECTIONS: NavSection[] = [
 
 const NAV_ITEMS_FLAT = NAV_SECTIONS.flatMap((section) => section.items.filter((item) => item.href));
 
-export function AdminShell({ children }: { children: ReactNode }) {
+type AdminShellProps = {
+	children: ReactNode;
+	session: Session | null;
+};
+
+export function AdminShell({ children, session }: AdminShellProps) {
 	const pathname = usePathname();
+	const rawName = session?.user?.name?.trim();
+	const displayName =
+		rawName && rawName.length > 0 ? rawName : session?.user?.email ?? session?.user?.id ?? undefined;
+	const userEmail = session?.user?.email && session?.user?.email !== displayName ? session.user.email : undefined;
+	const userRoleLabel =
+		typeof session?.user?.role === "string"
+			? session.user.role === "admin"
+				? "관리자"
+				: session.user.role
+			: undefined;
 
 	return (
 		<div className="fixed inset-0 flex bg-[var(--background)] text-[var(--brand-navy)]">
@@ -129,9 +147,46 @@ export function AdminShell({ children }: { children: ReactNode }) {
 							<Button variant="ghost" size="icon" className="rounded-full">
 								<Bell className="size-4" />
 							</Button>
-							<Badge variant="outline" className="hidden sm:inline-flex">
-								Admin
-							</Badge>
+							{session ? (
+								<>
+									{displayName ? (
+										<>
+											<Badge variant="outline" className="sm:hidden">
+												{displayName}
+											</Badge>
+											<div className="hidden min-w-[190px] flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-white/90 px-3 py-2 sm:flex">
+												<span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+													로그인 계정
+												</span>
+												<span className="text-sm font-semibold text-[var(--brand-navy)]">{displayName}</span>
+												{userEmail ? (
+													<span className="text-xs text-muted-foreground">{userEmail}</span>
+												) : null}
+											</div>
+										</>
+									) : null}
+									{userRoleLabel ? (
+										<Badge variant="outline" className="hidden sm:inline-flex">
+											{userRoleLabel}
+										</Badge>
+									) : null}
+									<Button
+										variant="ghost"
+										size="sm"
+										className="inline-flex items-center gap-2"
+										onClick={() => {
+											void signOut({ callbackUrl: "/member/login" });
+										}}
+									>
+										<LogOut className="size-4" />
+										<span className="hidden sm:inline">로그아웃</span>
+									</Button>
+								</>
+							) : (
+								<Badge variant="outline" className="hidden sm:inline-flex">
+									Admin
+								</Badge>
+							)}
 						</div>
 						<div className="flex gap-2 overflow-x-auto md:hidden">
 							{NAV_ITEMS_FLAT.map((item) => (
@@ -155,11 +210,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
 				<main className="flex-1 min-h-0 overflow-y-auto">
 					<div className="mx-auto w-full max-w-6xl px-4 py-8 lg:px-6">
-						<div className="mb-4 flex justify-end">
-							<Button variant="ghost" size="sm" asChild>
-								<Link href="/">↩ 홈 바로가기</Link>
-							</Button>
-						</div>
 						{children}
 					</div>
 				</main>

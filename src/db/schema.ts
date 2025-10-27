@@ -1,12 +1,15 @@
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+
+export const userRoleEnum = pgEnum("user_role", ["parent", "admin"]);
+export const userStatusEnum = pgEnum("user_status", ["pending", "active"]);
 
 export const users = pgTable("users", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	name: text("name"),
 	email: text("email").notNull().unique(),
 	passwordHash: text("password_hash").notNull(),
-	role: text("role").notNull().default("parent"),
-	status: text("status").notNull().default("pending"),
+	role: userRoleEnum("role").notNull().default("parent"),
+	status: userStatusEnum("status").notNull().default("pending"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

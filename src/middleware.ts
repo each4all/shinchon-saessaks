@@ -48,13 +48,19 @@ export async function middleware(request: NextRequest) {
 	}
 
 	if (pathname.startsWith("/parents")) {
+		const isPendingLanding = pathname === "/parents/pending";
 		if (!token) {
 			return redirectToLogin();
 		}
 		if (token.status !== "active") {
-			const url = new URL("/member/login", origin);
-			url.searchParams.set("status", typeof token.status === "string" ? token.status : "pending");
-			return NextResponse.redirect(url);
+			if (isPendingLanding) {
+				return NextResponse.next();
+			}
+			const pendingUrl = new URL("/parents/pending", origin);
+			return NextResponse.redirect(pendingUrl);
+		}
+		if (isPendingLanding) {
+			return NextResponse.redirect(new URL("/parents", origin));
 		}
 	}
 

@@ -39,14 +39,19 @@ test.describe("인증·권한 경로", () => {
 	await expect(page.getByRole("heading", { name: "등록된 자녀" })).toBeVisible();
 	});
 
-	test("승인 대기 학부모는 /parents 접근 시 로그인으로 되돌아가 안내 메시지를 확인한다", async ({ page }) => {
+	test("승인 대기 학부모는 포털 이동 시 대기 안내 페이지를 보게 된다", async ({ page }) => {
 		await loginAs(page, {
 			email: "parent-pending@playwright.test",
 			password: "Parent123!",
 		});
 
-		await expect(page).toHaveURL(/\/member\/login\?status=pending/);
-		await expect(page.getByText("관리자 승인 후 로그인하실 수 있습니다.")).toBeVisible();
+		await expect(page).toHaveURL(/\/parents\/pending$/);
+		await expect(
+			page.getByRole("heading", { name: "관리자 확인 후 이용하실 수 있어요" }),
+		).toBeVisible();
+		await expect(
+			page.getByText("요청하신 계정은 아직 승인 절차가 진행 중입니다.", { exact: false }),
+		).toBeVisible();
 	});
 
 	test("로그인 없이 /admin 접근 시 로그인 페이지로 이동", async ({ page }) => {

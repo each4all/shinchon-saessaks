@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { ArrowRight, LogIn, LogOut, Menu, X } from "lucide-react";
+import type { Session } from "next-auth";
 
 import { Button } from "@/components/ui/button";
 
@@ -16,8 +18,7 @@ const navItems = [
 ];
 
 type SiteHeaderClientProps = {
-	isAdmin: boolean;
-	isAuthenticated: boolean;
+	initialSession: Session | null;
 };
 
 type CtaButton = {
@@ -28,9 +29,16 @@ type CtaButton = {
 	className?: string;
 };
 
-export function SiteHeaderClient({ isAdmin, isAuthenticated }: SiteHeaderClientProps) {
+export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 	const pathname = usePathname();
+	const { data: clientSession, status } = useSession();
+	const session = status === "loading" ? initialSession : clientSession ?? initialSession;
+	const isAdmin = session?.user?.role === "admin";
+	const isAuthenticated = Boolean(session?.user?.id);
+	const isAdminRoute = pathname?.startsWith("/admin") ?? false;
+	const isParentsRoute = pathname?.startsWith("/parents") ?? false;
+	const userStatus = session?.user?.status;
 
 	useEffect(() => {
 		document.body.style.overflow = isMobileNavOpen ? "hidden" : "";
@@ -41,7 +49,26 @@ export function SiteHeaderClient({ isAdmin, isAuthenticated }: SiteHeaderClientP
 
 	const closeMobileNav = () => setIsMobileNavOpen(false);
 
-	const isAdminRoute = pathname?.startsWith("/admin") ?? false;
+	const handleSignOut = useCallback(() => {
+		setIsMobileNavOpen(false);
+		void signOut({ callbackUrl: "/member/login" });
+	}, []);
+
+	const makeAdminConsoleCta = (variant: CtaButton["variant"]): CtaButton => ({
+		key: "admin-console",
+		label: "관리자 콘솔",
+		href: "/admin",
+		variant,
+	});
+
+	const makeParentsPortalCta = (variant: CtaButton["variant"], href = "/parents"): CtaButton => ({
+		key: "parents-portal",
+		label: "학부모 포털",
+		href,
+		variant,
+		className:
+			"border-[var(--brand-secondary)] text-[var(--brand-secondary)] hover:bg-[var(--brand-secondary)]/10",
+	});
 
 	const desktopCtas: CtaButton[] = useMemo(() => {
 		const items: CtaButton[] = [
@@ -49,25 +76,23 @@ export function SiteHeaderClient({ isAdmin, isAuthenticated }: SiteHeaderClientP
 		];
 
 		if (isAdmin) {
-			items.push({
-				key: "admin-toggle",
-				label: isAdminRoute ? "홈 화면" : "관리자 콘솔",
-				href: isAdminRoute ? "/" : "/admin",
-				variant: "outline",
-			});
-		} else {
-			items.push({
-				key: "parents-portal",
-				label: "학부모 포털",
-				href: "/parents",
-				variant: "outline",
-				className:
-					"border-[var(--brand-secondary)] text-[var(--brand-secondary)] hover:bg-[var(--brand-secondary)]/10",
-			});
+			if (isAdminRoute) {
+				items.push(makeParentsPortalCta("outline"));
+			} else if (isParentsRoute) {
+				items.push(makeAdminConsoleCta("default"));
+			} else {
+				items.push(makeAdminConsoleCta("default"));
+			}
+		} else if (isAuthenticated) {
+			if (userStatus === "active") {
+				items.push(makeParentsPortalCta("outline"));
+			} else if (userStatus === "pending") {
+				items.push(makeParentsPortalCta("outline", "/parents/pending"));
+			}
 		}
 
 		return items;
-	}, [isAdmin, isAdminRoute]);
+	}, [isAdmin, isAdminRoute, isParentsRoute, isAuthenticated, userStatus]);
 
 	const mobileCtas: CtaButton[] = useMemo(() => {
 		const items: CtaButton[] = [
@@ -75,29 +100,40 @@ export function SiteHeaderClient({ isAdmin, isAuthenticated }: SiteHeaderClientP
 		];
 
 		if (isAdmin) {
-			items.push({
-				key: "admin-toggle",
-				label: isAdminRoute ? "홈 화면" : "관리자 콘솔",
-				href: isAdminRoute ? "/" : "/admin",
-				variant: "outline",
-			});
-		} else {
-			items.push({
-				key: "parents-portal",
-				label: "학부모 포털",
-				href: "/parents",
-				variant: "outline",
-				className:
-					"border-[var(--brand-secondary)] text-[var(--brand-secondary)] hover:bg-[var(--brand-secondary)]/10",
-			});
+			if (isAdminRoute) {
+				items.push(makeParentsPortalCta("outline"));
+			} else if (isParentsRoute) {
+				items.push(makeAdminConsoleCta("default"));
+			} else {
+				items.push(makeAdminConsoleCta("default"));
+			}
+		} else if (isAuthenticated) {
+			if (userStatus === "active") {
+				items.push(makeParentsPortalCta("outline"));
+			} else if (userStatus === "pending") {
+				items.push(makeParentsPortalCta("outline", "/parents/pending"));
+			}
 		}
 
 		items.push({ key: "programs", label: "교육 프로그램 보기", href: "/#programs", variant: "secondary" });
 
 		return items;
-	}, [isAdmin, isAdminRoute]);
+	}, [isAdmin, isAdminRoute, isParentsRoute, isAuthenticated, userStatus]);
 
-	const utilityLinks = isAuthenticated ? [] : [{ href: "/member/login", label: "로그인" }];
+	const authAction = useMemo(() => {
+		if (isAuthenticated) {
+			return {
+				type: "logout" as const,
+				label: "로그아웃",
+			};
+		}
+
+		return {
+			type: "login" as const,
+			label: "로그인",
+			href: "/member/login",
+		};
+	}, [isAuthenticated]);
 
 	return (
 		<header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/85 backdrop-blur">
@@ -121,27 +157,43 @@ export function SiteHeaderClient({ isAdmin, isAuthenticated }: SiteHeaderClientP
 					))}
 				</nav>
 
-				{utilityLinks.length ? (
-					<div className="hidden items-center gap-4 text-sm text-muted-foreground md:flex">
-						{utilityLinks.map((link) => (
-							<Link
-								key={link.href}
-								href={link.href}
-								className="transition hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-							>
-								{link.label}
-							</Link>
-						))}
-					</div>
-					) : null}
-
 					<div className="hidden items-center gap-2 md:flex">
-						{desktopCtas.map((cta) => (
-							<Button key={cta.key} variant={cta.variant} size="sm" className={cta.className} asChild>
-								<Link href={cta.href}>{cta.label}</Link>
+						{authAction.type === "login" ? (
+							<Button
+								variant="outline"
+								size="sm"
+								className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+								asChild
+							>
+								<Link href={authAction.href}>
+									<LogIn className="size-4" />
+									{authAction.label}
+								</Link>
 							</Button>
-						))}
-					</div>
+						) : (
+							<Button
+								variant="outline"
+								size="sm"
+								className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+								onClick={handleSignOut}
+							>
+								<LogOut className="size-4" />
+								{authAction.label}
+							</Button>
+						)}
+
+						{desktopCtas.map((cta) => (
+							<Button
+								key={cta.key}
+								variant={cta.variant}
+							size="sm"
+							className={cta.className}
+							asChild
+						>
+							<Link href={cta.href}>{cta.label}</Link>
+						</Button>
+					))}
+				</div>
 
 				<button
 					type="button"
@@ -179,36 +231,46 @@ export function SiteHeaderClient({ isAdmin, isAuthenticated }: SiteHeaderClientP
 							</Link>
 						))}
 
-						{utilityLinks.length ? (
 							<div className="mt-2 border-t border-[var(--border)] pt-6 text-sm text-muted-foreground">
 								<p className="mb-3 font-semibold text-[var(--brand-navy)]">빠른 연결</p>
 								<div className="flex flex-col gap-3">
-									{utilityLinks.map((link) => (
-										<Link
-											key={link.href}
-											href={link.href}
-											className="rounded-[var(--radius-md)] border border-[var(--border)] px-4 py-3 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
-											onClick={closeMobileNav}
+									{authAction.type === "login" ? (
+										<Button
+											variant="outline"
+											size="sm"
+											className="justify-center gap-2 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+											asChild
 										>
-											{link.label}
-										</Link>
-									))}
+											<Link href={authAction.href} onClick={closeMobileNav}>
+												<LogIn className="size-4" />
+												{authAction.label}
+											</Link>
+										</Button>
+									) : (
+										<Button
+											variant="outline"
+											size="sm"
+											className="inline-flex justify-center gap-2 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+											onClick={handleSignOut}
+										>
+											<LogOut className="size-4" />
+											{authAction.label}
+										</Button>
+									)}
 								</div>
 							</div>
-						) : null}
-					</nav>
+						</nav>
 
-						<div className="flex flex-col gap-3 border-t border-[var(--border)] px-6 py-6">
-							{mobileCtas.map((cta) => (
-								<Button
-									key={cta.key}
-									size="lg"
-									variant={cta.variant}
-									className={cta.className}
-									asChild
-									onClick={closeMobileNav}
-								>
-								<Link href={cta.href}>
+					<div className="flex flex-col gap-3 border-t border-[var(--border)] px-6 py-6">
+						{mobileCtas.map((cta) => (
+							<Button
+								key={cta.key}
+								size="lg"
+								variant={cta.variant}
+								className={cta.className}
+								asChild
+							>
+								<Link href={cta.href} onClick={closeMobileNav}>
 									{cta.label}
 									{cta.key === "admissions" ? <ArrowRight className="ml-2 size-4" /> : null}
 								</Link>

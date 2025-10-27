@@ -65,6 +65,21 @@ export function LoginForm() {
 				return;
 			}
 
+			try {
+				const sessionResponse = await fetch("/api/auth/session");
+				const sessionData = (await sessionResponse.json()) as {
+					user?: { status?: string | null };
+				} | null;
+				const userStatus = sessionData?.user?.status;
+
+				if (userStatus && userStatus !== "active") {
+					router.replace("/parents/pending");
+					return;
+				}
+			} catch (sessionError) {
+				console.error("세션 정보를 불러오는 중 오류 발생", sessionError);
+			}
+
 			router.replace(redirectTarget);
 		});
 	};

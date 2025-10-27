@@ -1,12 +1,14 @@
+import type { Session } from "next-auth";
+
 import { auth } from "@/lib/auth";
 
 import { SiteHeaderClient } from "./site-header.client";
 
-export async function SiteHeader() {
-	const session = await auth();
+type SiteHeaderProps = {
+	initialSession?: Session | null;
+};
 
-	const isAdmin = session?.user?.role === "admin";
-	const isAuthenticated = Boolean(session?.user?.id);
-
-	return <SiteHeaderClient isAdmin={isAdmin} isAuthenticated={isAuthenticated} />;
+export async function SiteHeader({ initialSession = null }: SiteHeaderProps = {}) {
+	const session = initialSession ?? (await auth());
+	return <SiteHeaderClient initialSession={session} />;
 }
