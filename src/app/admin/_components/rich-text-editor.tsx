@@ -19,11 +19,12 @@ type RichTextEditorProps = {
 	name: string;
 	initialValue?: string;
 	resetKey?: number;
+	disabled?: boolean;
 };
 
 type EditorCoreInstance = ReturnType<InstanceType<typeof Editor>["getInstance"]>;
 
-export function RichTextEditor({ name, initialValue = "", resetKey }: RichTextEditorProps) {
+export function RichTextEditor({ name, initialValue = "", resetKey, disabled = false }: RichTextEditorProps) {
 	const editorRef = useRef<EditorCoreInstance | null>(null);
 	const [value, setValue] = useState(initialValue);
 
@@ -37,7 +38,8 @@ export function RichTextEditor({ name, initialValue = "", resetKey }: RichTextEd
 
 	return (
 		<div className="grid gap-2 min-w-0">
-			<div className="min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-white">
+			<div className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-white">
+				{disabled ? <div className="absolute inset-0 z-10 cursor-not-allowed bg-white/70 backdrop-blur-sm" /> : null}
 				<Editor
 					ref={(instance) => {
 						editorRef.current = instance?.getInstance() ?? null;

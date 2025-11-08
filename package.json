@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1 --port 3100",
+    "dev": "bash -lc 'PORT=3100; PID=\"$(lsof -t -iTCP:$PORT -sTCP:LISTEN 2>/dev/null)\"; if [ -n \"$PID\" ]; then kill $PID; fi; rm -rf .next .turbo; exec next dev --hostname 127.0.0.1 --port $PORT'",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

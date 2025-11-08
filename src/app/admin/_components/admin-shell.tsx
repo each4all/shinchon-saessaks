@@ -14,6 +14,7 @@ import {
 	Plus,
 	Search,
 	Users,
+	UtensilsCrossed,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Session } from "next-auth";
@@ -24,11 +25,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+type Role = "admin" | "teacher" | "nutrition" | "parent" | "pending" | "guest";
+
 type NavItem = {
 	label: string;
 	href?: string;
 	icon: React.ComponentType<{ className?: string }>;
 	soon?: boolean;
+	allowedRoles?: Role[];
 };
 
 type NavSection = {
@@ -40,29 +44,30 @@ const NAV_SECTIONS: NavSection[] = [
 	{
 		title: "콘텐츠",
 		items: [
-			{ label: "대시보드 (공지)", href: "/admin", icon: LayoutDashboard },
-			{ label: "반 소식", href: "/admin/class-posts", icon: MessagesSquare },
-			{ label: "학사 일정", href: "/admin/class-schedules", icon: CalendarDays },
+			{ label: "대시보드 (공지)", href: "/admin", icon: LayoutDashboard, allowedRoles: ["admin"] },
+			{ label: "반 소식", href: "/admin/class-posts", icon: MessagesSquare, allowedRoles: ["admin", "teacher"] },
+			{ label: "학사 일정", href: "/admin/class-schedules", icon: CalendarDays, allowedRoles: ["admin", "teacher"] },
 		],
 	},
 	{
 		title: "커뮤니케이션",
-		items: [{ label: "1:1 문의", href: "/admin/parent-inquiries", icon: Newspaper }],
+		items: [{ label: "1:1 문의", href: "/admin/parent-inquiries", icon: Newspaper, allowedRoles: ["admin"] }],
 	},
 	{
 		title: "자료 · 리소스",
-		items: [{ label: "서식 · 운영위 자료", href: "/admin/parent-resources", icon: FileText }],
+		items: [
+			{ label: "서식 · 운영위 자료", href: "/admin/parent-resources", icon: FileText, allowedRoles: ["admin"] },
+			{ label: "급식 · 영양 관리", href: "/admin/meals", icon: UtensilsCrossed, allowedRoles: ["admin", "nutrition"] },
+		],
 	},
 	{
 		title: "멤버 & 데이터",
 		items: [
-			{ label: "회원 관리", href: "/admin/members", icon: Users },
-			{ label: "자녀 · 반 관리", href: "/admin/data-relations", icon: Database },
+			{ label: "회원 관리", href: "/admin/members", icon: Users, allowedRoles: ["admin"] },
+			{ label: "자녀 · 반 관리", href: "/admin/data-relations", icon: Database, allowedRoles: ["admin"] },
 		],
 	},
 ];
-
-const NAV_ITEMS_FLAT = NAV_SECTIONS.flatMap((section) => section.items.filter((item) => item.href));
 
 type AdminShellProps = {
 	children: ReactNode;
@@ -71,16 +76,34 @@ type AdminShellProps = {
 
 export function AdminShell({ children, session }: AdminShellProps) {
 	const pathname = usePathname();
+	const currentRole = (session?.user?.role as Role | undefined) ?? "guest";
 	const rawName = session?.user?.name?.trim();
 	const displayName =
 		rawName && rawName.length > 0 ? rawName : session?.user?.email ?? session?.user?.id ?? undefined;
 	const userEmail = session?.user?.email && session?.user?.email !== displayName ? session.user.email : undefined;
-	const userRoleLabel =
-		typeof session?.user?.role === "string"
-			? session.user.role === "admin"
-				? "관리자"
-				: session.user.role
-			: undefined;
+	const roleLabelMap: Partial<Record<Role, string>> = {
+		admin: "관리자",
+		teacher: "교사",
+		nutrition: "영양사",
+		parent: "학부모",
+	};
+	const userRoleLabel = roleLabelMap[currentRole];
+
+	const filteredSections = NAV_SECTIONS.map((section) => ({
+		...section,
+		items: section.items.filter((item) => {
+			if (!item.href) return false;
+			const allowed = item.allowedRoles ?? ["admin"];
+			return allowed.includes(currentRole) || (currentRole === "admin" && !allowed.includes("admin"));
+		}),
+	})).filter((section) => section.items.length > 0);
+
+	const navItemsFlat = filteredSections.flatMap((section) => section.items);
+	const featureToggleLabel = pathname?.startsWith("/admin/class-posts") ? "새 글" : "새 일정";
+	const canCreateQuick =
+		currentRole === "admin" || (currentRole === "teacher" && pathname?.startsWith("/admin/class-posts"));
+	const quickCreateHref =
+		pathname?.startsWith("/admin/class-posts") ? "/admin/class-posts/new" : "/admin/class-schedules/new";
 
 	return (
 		<div className="fixed inset-0 flex bg-[var(--background)] text-[var(--brand-navy)]">
@@ -90,7 +113,7 @@ export function AdminShell({ children, session }: AdminShellProps) {
 					<p className="text-xs text-muted-foreground">콘텐츠와 포털 운영을 한곳에서</p>
 				</div>
 				<nav className="flex-1 space-y-6 pr-1">
-					{NAV_SECTIONS.map((section) => (
+					{filteredSections.map((section) => (
 						<div key={section.title}>
 							<p className="px-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
 								{section.title}
@@ -140,10 +163,14 @@ export function AdminShell({ children, session }: AdminShellProps) {
 								/>
 								<Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
 							</div>
-							<Button variant="outline" size="sm" className="hidden sm:inline-flex">
-								<Plus className="mr-2 size-4" />
-								새 글
-							</Button>
+							{canCreateQuick ? (
+								<Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
+									<Link href={quickCreateHref}>
+										<Plus className="mr-2 size-4" />
+										{featureToggleLabel}
+									</Link>
+								</Button>
+							) : null}
 							<Button variant="ghost" size="icon" className="rounded-full">
 								<Bell className="size-4" />
 							</Button>
@@ -189,7 +216,7 @@ export function AdminShell({ children, session }: AdminShellProps) {
 							)}
 						</div>
 						<div className="flex gap-2 overflow-x-auto md:hidden">
-							{NAV_ITEMS_FLAT.map((item) => (
+							{navItemsFlat.map((item) => (
 								<Link
 									key={item.href}
 									href={item.href!}

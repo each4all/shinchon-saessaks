@@ -139,6 +139,11 @@ export default async function ParentsDashboardPage() {
 					<div className="grid gap-4 md:grid-cols-3">
 						{[
 							{
+								title: "급식 · 영양 안내",
+								description: "이번 달 식단표와 영양사 공지를 한눈에 확인하세요.",
+								href: "/parents/meals",
+							},
+							{
 								title: "서식 자료실",
 								description: "출결·건강 서류를 내려받고 바로 제출하세요.",
 								href: "/parents/resources",

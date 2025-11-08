@@ -32,6 +32,23 @@
 - **Integrations**: SMS 인증, 이메일 발송, 지도 API, Google Analytics/Hotjar 등을 모듈화하여 적용합니다 (`신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:1207-1249`).
 - **Testing & Compliance**: 접근성·성능·보안·반응형·브라우저 호환 테스트를 출시 필수 조건으로 유지합니다 (`신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:1200-1250`).
 
+## Iteration Log
+
+### 2025-10-28 — GPT-5 Codex
+- 반 소식 승인 워크플로 1차 정리: 교사 초안에 대한 관리자 검토 섹션을 `/admin/class-posts` 상단에 추가하고, 게시/숨김 상태 변경을 `UpdateClassPostStatusButton`으로 연결했습니다.
+- 교사 권한 보완: 숨김된 게시글에 대해 `재검토 요청` 버튼을 제공하고 목록 요약에서 승인 대기/숨김 안내 문구를 노출했습니다.
+- 부모 포털 노출 범위 확정: `getParentClassPosts`/`getParentClassPost`가 `status = 'published'`만 반환하도록 수정하고 정렬 기준을 `published_at → publish_at → created_at` 우선순위로 통일했습니다.
+- 학사 일정 승인 플로우 구축: `/admin/class-schedules`에 승인 대기 패널과 게시/초안/취소 버튼을 추가하고, 취소 사유 입력 프롬프트·교사 안내 문구를 포함한 상태 뷰를 구성했습니다.
+- 서버 액션 정합성: 게시 취소 시 `published_at`/`published_by`를 초기화하고 교사 작성 시 성공 메시지를 “승인 대기”로 안내하도록 정리했습니다.
+- 급식 · 영양 관리 확장: 급식 수정 경로(`/admin/meals/[id]/edit`)와 첨부 URL 검증/중복 방지 로직을 추가하고, 영양 게시물 작성·수정·상태 전환 UI(초안/게시/보관)를 `/admin/meals`에 통합했습니다.
+- 학부모 포털 급식 뷰 정비: `/parents/meals` 페이지를 신설해 게시된 식단을 날짜별로 그룹화하고 영양사 공지를 함께 노출하며, 대시보드 빠른 바로가기에 링크를 추가했습니다.
+- 승인/검증 자동화: Playwright 테스트(`tests/approval-workflows.spec.ts`)로 반 소식·학사 일정 승인 흐름과 급식 첨부 검증/중복 방지 시나리오를 점검하도록 글로벌 테스트 유저/교실 시드를 확장했습니다.
+- 급식 전체 공개 지원: `meal_plan_audience_scope` enum에 `all`을 추가하고 관리자/학부모 화면·쿼리를 반영했으며, 관련 ASCII 레이아웃도 최신 상태로 업데이트했습니다.
+- 다음 단계 후보:
+  1) 학부모 포털 반 소식 갤러리화(썸네일/라이트박스 UI),
+  2) 학부모 학사 일정 달력형 뷰 구현(달력 컴포넌트 + 상태 필터),
+  3) 학부모 급식 달력/미디어 프리뷰 고도화 및 퍼블릭 뉴스/포토 보강.
+
 ## PWA Strategy (Phase 3)
 - 3단계 고도화(1개월) 일정에 선택 과업으로 PWA 배포를 포함해 핵심 포털 기능이 안정화된 뒤 설치형 경험을 제공 (`신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:1090-1103`).
 - 기본 범위: 웹 앱 매니페스트·아이콘 세트 제작, 서비스 워커 기반 오프라인 셸, 마케팅·부모 포털 읽기 페이지 캐싱, 오프라인 안내 화면 준비.
@@ -86,6 +103,9 @@
 - Authentication-gated pages rely on alert dialogs; must redirect with guidance (`신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:171-187`).
 - Current 팝업이 네이버 폼 외부 의존, 쿠키 기반 on/off만 제공 (`신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:220-244`).
 - 회원정보 수정은 단일 화면, 자녀 정보 최대 3명 입력, 전화번호 3분할 필드, zip 팝업 사용 등 마이그레이션 시 주의 (`신촌몬테소리유치원_사이트맵_및_페이지구조.md:1180-1183`).
+- 반별 교육활동 게시판은 텍스트 목록 + 테이블형 상세(이미지 다중 첨부) 구조로 이미지 미리보기·요약·교사 메타 정보가 부재하며, hover 메뉴/무한 페이지네이션/HTTP 이미지로 접근성과 보안 경고 문제가 발생.
+- 월별 행사 달력은 `<table>` + inline `onclick` 패턴에 의존해 키보드 내비게이션이 불가능하고, 상세 페이지가 조회수 외 콘텐츠가 없어 일정 맥락·첨부 제공이 이뤄지지 않음.
+- 급식 게시판은 (1) 하루 식단 정보를 달력 셀에 장문 텍스트로만 노출하고 (2) 영양소식 게시물은 JPG/스캔 이미지를 단일 첨부로 제공해 검색·다운로드·데이터 재활용이 어려움.
 
 ## Current Assets
 - `신촌몬테소리유치원_개선안_요약본.md` — high-level goals and phased plan.
@@ -108,6 +128,7 @@
 - `middleware.ts` — 학부모/관리자 라우트 접근 제어 가드.
 - `drizzle.config.ts`, `src/db/schema.ts` — Drizzle 마이그레이션 설정과 스키마 정의.
 - `drizzle/` — 생성된 마이그레이션 SQL(`0000_dear_lockjaw.sql`)과 메타(`meta/`) 파일.
+- `docs/module-requirements-phase1.md` — 반 소식/학사 일정/급식 모듈 1단계 요구사항 정리(2025-10-27 작성).
 
 ## Workflow for Agents
 1. **Before Editing**
@@ -125,20 +146,49 @@
    - When introducing new tooling or architectural shifts, document rationale in both the relevant spec and the History Log.
    - 사용자 요청에 따라 대화 및 보고는 기본적으로 한국어로 진행합니다.
 
-## Immediate Next Steps (Suggested)
-- Document shadcn/ui 테마 변수와 적용 원칙(브랜드 컬러, 폰트 등)을 명세에 반영.
-- Finalize NextAuth 흐름(비밀번호 재설정, 승인 거절 처리, 세션 만료 정책)을 명세화.
-- Model Vercel DB(PostgreSQL) 스키마와 마이그레이션(회원/자녀/게시판/상담/알림 및 설정 테이블 포함) 설계를 착수.
-- Scaffold `/admin` 레이아웃과 접근 제어 미들웨어 골격.
-- Draft migration plan for legacy content, especially parent portal data and media.
-- Start PWA discovery: 대상 라우트, 매니페스트 요구 아이콘, 서비스 워커 캐싱 정책, 오프라인 시나리오를 정의해 3단계 투입을 준비.
-- Connect News section to `news_posts` 테이블 기반의 read API, 상세 페이지 SEO 메타 구조 확정.
-- Model `news_posts`/`news_attachments` 등 주요 테이블을 Drizzle 스키마로 확장하고 Admin CRUD Server Action 설계.
-- `/admin` 레이아웃 및 네비게이션, News/승인 관리 UI를 scaffolding하고 Server Action과 연결.
-- Drizzle 마이그레이션을 CI/배포 흐름에 포함시키고 `npm run db:generate`/`npm run db:push` 운용 절차를 문서화.
-- 부모 포털 `/parents` 초기 레이아웃과 승인 대기 안내 페이지 작성.
+## Immediate Next Steps (2025-10-29)
+- 배포 전 스테이징/운영 DB에서 `meal_plan_audience_scope`에 `all` 값이 적용됐는지 최종 확인(로컬 메타/시드 반영 완료).
+- 반 소식/학사 일정 승인 워크플로에서 교사 재검토 요청 알림(메일/슬랙 웹훅)과 관리자 알림 큐를 설계하며 상태 변경 서버 액션 로깅을 추가.
+- 퍼블릭 급식 QA 체크리스트(`docs/module-requirements-phase1.md:162-169`) 중 접근성·모바일 검증을 수행하고 결과를 기록.
+
+## Parent & Public Meal Rollout Plan (3단계)
+1. ✅ **1단계 — 반 소식 미디어 개선** (완료 2025-10-29)  
+   - 학부모 목록·상세에 이미지 썸네일/갤러리 추가, 첨부 분류 로직 정리.  
+   - 관리자 승인 패널과 교사 재검토 버튼을 UI에 연결.
+2. ✅ **2단계 — 학사 일정 월간 캘린더화** (완료 2025-10-29)  
+   - `/parents/schedule`에 달력/상태 필터를 도입하고, 취소 사유 표시를 포함.  
+   - Admin 일정 목록에 취소/재게시 버튼과 승인 큐를 배치.
+3. ✅ **3단계 — 급식 공개 & 영양 콘텐츠 확장** (완료 2025-10-29)  
+   - 퍼블릭 `/meals` 페이지에 MealCalendar/첨부 프리뷰 공개 완료.  
+   - `scripts/seed-parents.ts`에 전체 공개 식단 샘플과 학부모 전용 간식 데이터를 추가하고, Drizzle 메타(`drizzle/meta/0002_snapshot.json`)에 `audience_scope = 'all'` 값을 반영.  
+   - 영양 게시물 CRUD/상태 토글 및 첨부 URL 검증 강화 (`src/app/admin/meals/*`, `src/app/admin/meals/actions.ts`).  
+   - Playwright 회귀(`tests/meals-public.spec.ts`, `tests/approval-workflows.spec.ts`)로 공개 범위 전환과 검증 시나리오 추가.
+
+## Legacy Alignment Workstream (2025-10-29)
+1. ✅ **Stage 1 — 상단 네비게이션/앵커 재정렬**  
+   - 헤더 메뉴를 Legacy 용어(유치원 소개·교육환경·교육과정·우리들 이야기·신촌소식·오늘의 식단)에 맞춰 복구.  
+   - 홈에 `#environment` 섹션을 추가해 교육환경 콘텐츠 이동 경로 확보.
+2. ✅ **Stage 2 — 급식 UI (오늘의 식단) 재구성**  
+   - 월간 표 + 패널 기반 UI로 전환하고, 기존 데이터를 활용한 날짜별 상세 패널을 구현.  
+3. ✅ **Stage 3 — 반별 교육활동 목록/상세 조정**  
+   - 학부모 목록을 번호·반·제목·게시일·첨부 테이블로 재구성하고 사진/파일 개수 뱃지를 제공.  
+   - 상세는 반투명 오버레이 모달에서 사진 라이트박스 카드와 첨부 링크 패널로 표시.  
+4. ✅ **Stage 4 — 로그인 전/후 접근 플로우 정비**  
+   - `/stories/class-news` 공개 요약 페이지를 추가하고 로그인 모달과 함께 목록 미리보기를 제공.  
+   - 비로그인 사용자가 `/parents/posts` 진입 시 요약 페이지로 안내하고 즉시 로그인 모달을 띄우도록 조정.  
+5. ✅ **Stage 5 — 관리자 폼 안내 강화**  
+   - 반 소식/급식 폼에 프런트 노출 예시와 필드 매핑 가이드를 추가해 운영자가 입력 결과를 즉시 파악할 수 있도록 지원.
 
 ## History Log
+- 2025-10-29 — 상단 네비게이션을 Legacy 용어·경로(유치원 소개/교육환경/교육과정/우리들 이야기/신촌소식/오늘의 식단)로 재배치하고 홈에 `#environment` 섹션을 추가해 교육환경 안내를 제공.
+- 2025-10-29 — 급식 페이지(학부모/퍼블릭)를 월간 표 + 상세 패널 구조로 재구성하여 기존 “오늘의 식단” 흐름을 유지하면서 사진·첨부 미리보기를 제공.
+- 2025-10-29 — 반 소식 Stage 3: `/parents/posts`를 테이블형 게시판으로 전환하고 상세 페이지를 라이트박스 모달로 개편해 Legacy UX를 보존하면서 최신 스타일을 적용.
+- 2025-10-29 — 로그인 플로우 Stage 4: `/stories/class-news` 공개 요약 페이지와 로그인 모달을 도입하고, 비로그인 접근 시 요약→로그인→상세 순서로 유도하도록 네비게이션과 리디렉션을 정비.
+- 2025-10-29 — 급식 Stage 3: 퍼블릭/학부모 식단 UI 통합, `scripts/seed-parents.ts`에 전체 공개 식단 샘플 추가, `drizzle/meta/0002_snapshot.json` enum 갱신, `tests/meals-public.spec.ts`·`tests/approval-workflows.spec.ts`로 회귀 시나리오 보강.
+- 2025-11-05 — 인사말 모듈을 DB/어드민 기반에서 정적 데이터(코드 내 관리)로 전환하여 `/admin/intro/greetings`와 관련 seed 스크립트를 제거하고 `/intro/greeting`은 코드 편집만으로 즉시 반영되도록 단순화.
+- 2025-10-29 — 공식 인사말 전용 라우트(`/intro/greeting`)를 추가하고 헤더 네비게이션을 Legacy 구조(유치원 소개 > 인사말/이사장/원장/교사)와 동일하게 동작하도록 조정.
+- 2025-10-29 — Stage 5 완료: `/admin/class-posts`와 `/admin/meals` 폼에 프런트 미리보기 패널과 필드별 노출 가이드를 추가해 Legacy 스타일 입력 흐름을 보강.
+- 2025-10-29 — 학부모 포털 반 소식에 갤러리 썸네일/상세 사진 그리드를 추가하고, 학사 일정 달력/필터, 급식 달력 + 이미지/첨부 뷰를 통합. 퍼블릭 `/meals` 페이지에서 전체 공개 급식·영양 안내를 제공하고 `docs/ascii-wireframes.md`를 최신 레이아웃(퍼블릭/학부모/어드민)으로 갱신해 요구 변화(급식 전체 공개)를 기록.
 - 2025-10-22 — Initial AGENT.md created from v1.0 specification set; established shadcn/ui as mandatory UI layer and recorded legacy remediation items.
 - 2025-10-23 — Evaluated TypeScript 풀스택 옵션(Next.js + tRPC + Prisma + PostgreSQL + Redis + NextAuth)과 관리자 워크스페이스 초기 범위를 확정.
 - 2025-10-23 — Initialized Git repository using separate `.gitdir` store (workspace is `/Users/c2/Documents/Personal/shinchon-saessaks`) and added base project docs/configs.
@@ -151,6 +201,7 @@
 - 2025-10-24 — Stage 3 선택 과업인 PWA 전략을 정의하고 범위·선행 조건·기술 선택을 AGENT 가이드에 기록.
 - 2025-10-25 — 공개 홈페이지 헤더/푸터를 공용 컴포넌트화하고 홈 섹션을 명세 기반으로 스캐폴딩, 알림마당/학부모 포털/로그인 플레이스홀더 라우트를 추가.
 - 2025-10-25 — 내부 Admin에서 News/공지 콘텐츠를 관리하는 전략과 NextAuth 승인 흐름 설계안을 작성하고 AGENT 가이드에 반영.
+- 2025-10-27 — Phase 2 스키마 확장을 위해 `docs/module-requirements-phase1.md`에 DB/API 초안을 기록하고, Drizzle 스키마/마이그레이션(`0005_phase2_core.sql`)을 추가해 반 소식·학사 일정·급식 테이블 및 역할 권한을 구조화.
 - 2025-10-25 — 회원가입 폼과 서버 액션을 추가하고 PBKDF2 기반 비밀번호 해시 헬퍼를 도입.
 - 2025-10-25 — Drizzle ORM 기반 마이그레이션 체계를 도입하고 `schema.ts`, `drizzle.config.ts`, 마이그레이션 SQL을 추가.
 - 2025-10-25 — NextAuth Credentials 기반 로그인(`/member/login`), 인증 미들웨어, `/api/auth` 라우트를 구성하고 테스트.
@@ -249,3 +300,4 @@
     ]
   }
   ```
+- 2025-10-29 — Legacy 구조와의 괴리를 줄이기 위한 재정렬 계획 합의 (네비게이션 복구, 급식 테이블·팝업 유지, 반 소식 테이블/모달 전환) 및 다음 단계(네비게이션→급식→반 소식→로그인 흐름→관리자 안내) 작업 순서를 정의.

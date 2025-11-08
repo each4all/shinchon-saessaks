@@ -39,11 +39,37 @@ export async function middleware(request: NextRequest) {
 	}
 
 	if (pathname.startsWith("/admin")) {
+		const adminRouteRules: { prefix: string; roles: Array<string> }[] = [
+			{ prefix: "/admin/class-posts", roles: ["admin", "teacher"] },
+			{ prefix: "/admin/class-schedules", roles: ["admin", "teacher"] },
+			{ prefix: "/admin/meals", roles: ["admin", "nutrition"] },
+			{ prefix: "/admin/nutrition", roles: ["admin", "nutrition"] },
+		];
+
 		if (!token) {
 			return redirectToLogin();
 		}
-		if (token.role !== "admin") {
+
+		const role = typeof token.role === "string" ? token.role : "";
+
+		const matchedRule = adminRouteRules.find((rule) => pathname.startsWith(rule.prefix));
+		const isAllowed = matchedRule ? matchedRule.roles.includes(role) || role === "admin" : role === "admin";
+
+		if (!isAllowed) {
+			if (role === "teacher") {
+				return NextResponse.redirect(new URL("/admin/class-posts", origin));
+			}
+			if (role === "nutrition") {
+				return NextResponse.redirect(new URL("/admin/meals", origin));
+			}
 			return NextResponse.redirect(new URL("/", origin));
+		}
+
+		if (pathname === "/admin" && role === "teacher") {
+			return NextResponse.redirect(new URL("/admin/class-posts", origin));
+		}
+		if (pathname === "/admin" && role === "nutrition") {
+			return NextResponse.redirect(new URL("/admin/meals", origin));
 		}
 	}
 

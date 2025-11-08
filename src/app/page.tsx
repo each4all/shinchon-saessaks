@@ -8,6 +8,9 @@ import {
 	Megaphone,
 	Microscope,
 	Sparkles,
+	ShieldCheck,
+	Trees,
+	Home as HomeIcon,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -82,6 +85,26 @@ const dailyRhythm = [
 	{ time: "15:00", title: "하원 & 가정 연계", description: "알림장을 통해 가정과 공유하며 하루의 배움이 집으로 자연스럽게 이어집니다." },
 ];
 
+const environmentHighlights = [
+	{
+		icon: HomeIcon,
+		title: "따뜻한 실내 학습 환경",
+		description:
+			"햇살이 잘 드는 교실과 연령별 맞춤 교구 배치를 통해 아이가 스스로 선택하고 집중할 수 있는 공간을 마련했어요.",
+	},
+	{
+		icon: Trees,
+		title: "도심 속 자연 놀이터",
+		description: "옥상 정원과 야외 놀이장을 활용해 사계절 자연 놀이와 생태 체험을 진행합니다. 매주 숲 체험 활동도 이어져요.",
+	},
+	{
+		icon: ShieldCheck,
+		title: "안전한 공기·보안 시스템",
+		description:
+			"CCTV, 공기질 모니터링, 출입 통제 시스템을 도입해 통학길부터 교실까지 안심하고 머무를 수 있도록 관리하고 있습니다.",
+	},
+];
+
 // Ref: 신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:600-665 (입학 절차 단계 정의)
 const admissionsSteps = [
 	{
@@ -138,14 +161,18 @@ export default async function Home() {
 		highlightedNews.length > 0 ? highlightedNews : await getNewsList({ limit: 3 });
 	return (
 		<div className="bg-[var(--background)] text-[var(--brand-navy)]">
-			<section id="hero" className="relative isolate overflow-hidden">
+			<section id="hero" data-testid="hero" className="relative isolate overflow-hidden">
 				<div
 					className="pointer-events-none absolute inset-0"
 					style={{ background: "var(--gradient-cloudwalk)" }}
 				/>
 				<div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16 sm:gap-12 sm:px-10 sm:py-24 lg:px-12 lg:py-28">
 					<div className="flex flex-col gap-6 sm:max-w-3xl">
-						<Badge variant="sunshine" className="w-fit tracking-[0.18em]">
+						<Badge
+							lang="en"
+							variant="sunshine"
+							className="w-fit uppercase tracking-[0.18em]"
+						>
 							Shinchon Montessori
 						</Badge>
 						<h1 className="font-heading text-[clamp(3rem,6vw,4.5rem)] leading-[1.08] text-[var(--brand-navy)]">
@@ -195,7 +222,9 @@ export default async function Home() {
 				className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-20 sm:px-10 lg:px-12"
 			>
 				<header className="max-w-3xl space-y-4">
-					<Badge variant="outline">우리의 교육 약속</Badge>
+					<Badge variant="outline" className="normal-case tracking-[0.02em]">
+						우리의 교육 약속
+					</Badge>
 					<h2 className="font-heading text-[clamp(2.5rem,4.5vw,3.5rem)] leading-[1.12]">
 						아이·교사·가정이 함께 만드는 Petit Learning Journey
 					</h2>
@@ -225,11 +254,49 @@ export default async function Home() {
 			</section>
 
 			<section
+				id="environment"
+				className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-20 sm:px-10 lg:px-12"
+			>
+				<header className="space-y-4">
+					<Badge variant="outline" className="normal-case tracking-[0.02em]">
+						교육환경
+					</Badge>
+					<h2 className="font-heading text-[clamp(2.25rem,4vw,3.25rem)] leading-tight">
+						아이들이 숨 쉬는 공간을 세심하게 설계했어요
+					</h2>
+					<p className="max-w-3xl text-base leading-relaxed text-muted-foreground">
+						실내 교실에서 야외 놀이터까지, 아이가 하루를 보내는 모든 공간을 안전하고 따뜻하게 가꾸고
+						있습니다.
+					</p>
+				</header>
+
+				<div className="grid gap-6 md:grid-cols-3">
+					{environmentHighlights.map((item) => (
+						<Card key={item.title} className="h-full border-[var(--brand-secondary)]/20">
+							<CardHeader className="space-y-3">
+								<div className="inline-flex size-12 items-center justify-center rounded-[var(--radius-pill)] bg-[var(--brand-mint)]/30 text-[var(--brand-secondary)] shadow-[var(--shadow-soft)]">
+									<item.icon className="size-5" />
+								</div>
+								<CardTitle className="font-heading text-xl text-[var(--brand-navy)]">
+									{item.title}
+								</CardTitle>
+								<CardDescription className="text-sm leading-relaxed text-muted-foreground">
+									{item.description}
+								</CardDescription>
+							</CardHeader>
+						</Card>
+					))}
+				</div>
+			</section>
+
+			<section
 				id="programs"
 				className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-20 sm:px-10 lg:px-12"
 			>
 				<header className="space-y-4">
-					<Badge variant="mint">교육 프로그램</Badge>
+					<Badge variant="mint" className="normal-case tracking-[0.02em]">
+						교육 프로그램
+					</Badge>
 					<h2 className="font-heading text-[clamp(2.25rem,4vw,3.25rem)] leading-tight">
 						연령과 리듬에 맞춘 3단계 Casa 커리큘럼
 					</h2>
@@ -252,7 +319,11 @@ export default async function Home() {
 							</CardHeader>
 							<CardContent className="flex flex-wrap gap-2">
 								{track.focus.map((item) => (
-									<Badge key={item} variant="outline" className="text-xs">
+									<Badge
+										key={item}
+										variant="outline"
+										className="text-xs normal-case tracking-[0.01em]"
+									>
 										{item}
 									</Badge>
 								))}
@@ -297,7 +368,9 @@ export default async function Home() {
 				className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-20 sm:px-10 lg:px-12"
 			>
 				<header className="max-w-3xl space-y-4">
-					<Badge variant="secondary">입학 안내</Badge>
+					<Badge variant="secondary" className="normal-case tracking-[0.02em]">
+						입학 안내
+					</Badge>
 					<h2 className="font-heading text-[clamp(2.25rem,4vw,3rem)] leading-tight">
 						입학 절차는 간단하게, 만남과 적응은 세심하게
 					</h2>
@@ -311,7 +384,10 @@ export default async function Home() {
 					{admissionsSteps.map((step, index) => (
 						<Card key={step.title} className="h-full border-[var(--brand-primary)]/15">
 							<CardHeader className="space-y-3">
-								<Badge variant="ghost" className="text-xs text-[var(--brand-primary)]">
+								<Badge
+									variant="ghost"
+									className="text-xs normal-case tracking-[0.01em] text-[var(--brand-primary)]"
+								>
 									Step {index + 1}
 								</Badge>
 								<CardTitle className="font-heading text-xl text-[var(--brand-navy)]">
@@ -325,7 +401,10 @@ export default async function Home() {
 					))}
 				</div>
 
-				<div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--brand-primary)]/30 bg-white/85 px-6 py-8 shadow-[var(--shadow-soft)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+					<div
+						data-testid="cta-section"
+						className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--brand-primary)]/30 bg-white/85 px-6 py-8 shadow-[var(--shadow-soft)] backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+					>
 					<div className="space-y-2">
 						<p className="text-sm text-muted-foreground">상담 전화</p>
 						<p className="font-heading text-2xl text-[var(--brand-primary)]">02-324-0671</p>
@@ -349,7 +428,9 @@ export default async function Home() {
 			>
 				<header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 					<div className="space-y-3">
-						<Badge variant="outline">알림마당</Badge>
+					<Badge variant="outline" className="normal-case tracking-[0.02em]">
+						알림마당
+					</Badge>
 						<h2 className="font-heading text-[clamp(2rem,3.5vw,3rem)] leading-tight">
 							학부모와 함께 나누는 최신 소식
 						</h2>
@@ -374,7 +455,10 @@ export default async function Home() {
 						homepageNews.map((item) => (
 							<Card key={item.id} className="h-full border-[var(--border)]">
 							<CardHeader className="space-y-3">
-								<Badge variant="ghost" className="w-fit text-xs text-[var(--brand-secondary)]">
+								<Badge
+									variant="ghost"
+									className="w-fit text-xs normal-case tracking-[0.01em] text-[var(--brand-secondary)]"
+								>
 									{resolveCategoryLabel(item.category)}
 								</Badge>
 								<CardTitle className="text-lg text-[var(--brand-navy)]">{item.title}</CardTitle>
@@ -406,7 +490,9 @@ export default async function Home() {
 				<div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/85 p-8 shadow-[var(--shadow-soft)] backdrop-blur">
 					<div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 						<div className="max-w-xl space-y-4">
-							<Badge variant="sunshine" className="text-xs">Visit & Contact</Badge>
+							<Badge variant="sunshine" className="text-xs uppercase tracking-[0.16em]">
+								Visit & Contact
+							</Badge>
 							<h2 className="font-heading text-[clamp(2rem,3.5vw,3rem)] leading-tight">
 								신촌역에서 5분, 언제든 따뜻하게 맞이할 준비가 되어 있습니다
 							</h2>

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-import { initialFormState, type FormState } from "../form-state";
+import type { FormState } from "../form-state";
 
 const createClassPostSchema = z.object({
 	classroomId: z.string().uuid({ message: "반을 선택해 주세요." }),
@@ -47,6 +47,7 @@ const createClassPostSchema = z.object({
 			}),
 		)
 		.max(5),
+	audienceScope: z.enum(["classroom", "all", "private"]).default("classroom"),
 });
 
 function markdownToParagraphs(markdown: string) {
@@ -84,15 +85,40 @@ function mapFormData(formData: FormData) {
 		contentMarkdown: (formData.get("contentMarkdown") as string | null) ?? "",
 		publishAt: formData.get("publishAt") as string | undefined,
 		attachments,
+		audienceScope: (formData.get("audienceScope") as string | undefined) ?? "classroom",
 	};
+}
+
+async function isTeacherAssignedToClassroom(teacherId: string, classroomId: string) {
+	const result = await db`
+		SELECT 1
+		FROM classroom_teachers
+		WHERE teacher_id = ${teacherId}
+			AND classroom_id = ${classroomId}
+		LIMIT 1
+	`;
+
+	return result.rows.length > 0;
+}
+
+async function getPostAccessSnapshot(postId: string) {
+	const { rows } = await db`
+		SELECT classroom_id AS "classroomId", author_id AS "authorId", audience_scope AS "audienceScope"
+		FROM class_posts
+		WHERE id = ${postId}
+		LIMIT 1
+	`;
+	return rows[0] as { classroomId: string | null; authorId: string | null; audienceScope: string } | undefined;
 }
 
 export async function createClassPostAction(_: FormState, formData: FormData): Promise<FormState> {
 	const session = await auth();
-	if (!session || session.user?.role !== "admin") {
+	const role = session?.user?.role ?? "";
+
+	if (!session || (role !== "admin" && role !== "teacher")) {
 		return {
 			status: "error",
-			message: "관리자 권한이 필요합니다.",
+			message: "권한이 필요합니다.",
 		};
 	}
 
@@ -106,14 +132,51 @@ export async function createClassPostAction(_: FormState, formData: FormData): P
 	}
 
 	const data = parsed.data;
+	const audienceScope = role === "admin" ? data.audienceScope : "classroom";
 	const publishAtValue = data.publishAt ? data.publishAt.toISOString() : null;
+	const initialStatus = role === "admin" ? "published" : "draft";
+	const initialPublishedAt = initialStatus === "published" ? new Date().toISOString() : null;
+
+	if (role === "teacher") {
+		const allowed = await isTeacherAssignedToClassroom(session.user.id, data.classroomId);
+		if (!allowed) {
+			return {
+				status: "error",
+				message: "담당 반이 아닌 게시글은 작성할 수 없습니다.",
+			};
+		}
+	}
 
 	try {
 		const content = markdownToParagraphs(data.contentMarkdown);
 
 		const inserted = await db`
-			INSERT INTO class_posts (classroom_id, author_id, title, summary, content, publish_at)
-			VALUES (${data.classroomId}, ${session.user.id}, ${data.title}, ${data.summary ?? null}, ${content}, ${publishAtValue})
+			INSERT INTO class_posts (
+				classroom_id,
+				author_id,
+				title,
+				summary,
+				content,
+				publish_at,
+				status,
+				audience_scope,
+				published_at,
+				published_by,
+				updated_by
+			)
+			VALUES (
+				${data.classroomId},
+				${session.user.id},
+				${data.title},
+				${data.summary ?? null},
+				${content},
+				${publishAtValue},
+				${initialStatus},
+				${audienceScope},
+				${initialPublishedAt},
+				${initialStatus === "published" ? session.user.id : null},
+				${session.user.id}
+			)
 			RETURNING id
 		`;
 
@@ -124,21 +187,31 @@ export async function createClassPostAction(_: FormState, formData: FormData): P
 		}
 
 		const attachments = data.attachments.filter((attachment) => attachment.url);
-
-		for (const attachment of attachments) {
+		for (const [index, attachment] of attachments.entries()) {
 			await db`
-				INSERT INTO class_post_attachments (post_id, file_url, label)
-				VALUES (${postId}, ${attachment.url}, ${attachment.label ?? null})
+				INSERT INTO class_post_media (post_id, file_url, caption, alt_text, media_type, display_order)
+				VALUES (
+					${postId},
+					${attachment.url},
+					${attachment.label ?? null},
+					${attachment.label ?? null},
+					${"image"},
+					${index}
+				)
 			`;
 		}
 
 		revalidatePath("/admin/class-posts");
 		revalidatePath("/parents");
 		revalidatePath("/parents/posts");
+		revalidatePath("/stories/class-news");
+
+		const successMessage =
+			role === "admin" ? "반 소식을 게시했습니다." : "초안이 저장되었습니다. 관리자 승인 후 게시됩니다.";
 
 		return {
 			status: "success",
-			message: "반 소식을 등록했습니다.",
+			message: successMessage,
 		};
 	} catch (error) {
 		console.error("[createClassPostAction]", error);
@@ -151,10 +224,12 @@ export async function createClassPostAction(_: FormState, formData: FormData): P
 
 export async function deleteClassPostAction(_: FormState, formData: FormData): Promise<FormState> {
 	const session = await auth();
-	if (!session || session.user?.role !== "admin") {
+	const role = session?.user?.role ?? "";
+
+	if (!session || (role !== "admin" && role !== "teacher")) {
 		return {
 			status: "error",
-			message: "관리자 권한이 필요합니다.",
+			message: "권한이 필요합니다.",
 		};
 	}
 
@@ -166,13 +241,38 @@ export async function deleteClassPostAction(_: FormState, formData: FormData): P
 		};
 	}
 
+	const snapshot = await getPostAccessSnapshot(postId);
+	if (!snapshot) {
+		return {
+			status: "error",
+			message: "게시글을 찾을 수 없습니다.",
+		};
+	}
+
+	if (role === "teacher") {
+		if (!snapshot.classroomId) {
+			return {
+				status: "error",
+				message: "담당 반이 아닌 게시글은 삭제할 수 없습니다.",
+			};
+		}
+		const allowed = await isTeacherAssignedToClassroom(session.user.id, snapshot.classroomId);
+		if (!allowed || snapshot.authorId !== session.user.id) {
+			return {
+				status: "error",
+				message: "담당 반에서 작성한 게시글만 삭제할 수 있습니다.",
+			};
+		}
+	}
+
 	try {
-		await db`DELETE FROM class_post_attachments WHERE post_id = ${postId}`;
+		await db`DELETE FROM class_post_media WHERE post_id = ${postId}`;
 		await db`DELETE FROM class_posts WHERE id = ${postId}`;
 
 		revalidatePath("/admin/class-posts");
 		revalidatePath("/parents");
 		revalidatePath("/parents/posts");
+		revalidatePath("/stories/class-news");
 
 		return {
 			status: "success",
@@ -187,15 +287,14 @@ export async function deleteClassPostAction(_: FormState, formData: FormData): P
 	}
 }
 
-export { initialFormState };
-export type { FormState };
-
 export async function updateClassPostAction(_: FormState, formData: FormData): Promise<FormState> {
 	const session = await auth();
-	if (!session || session.user?.role !== "admin") {
+	const role = session?.user?.role ?? "";
+
+	if (!session || (role !== "admin" && role !== "teacher")) {
 		return {
 			status: "error",
-			message: "관리자 권한이 필요합니다.",
+			message: "권한이 필요합니다.",
 		};
 	}
 
@@ -219,8 +318,43 @@ export async function updateClassPostAction(_: FormState, formData: FormData): P
 	const data = parsed.data;
 	const publishAtValue = data.publishAt ? data.publishAt.toISOString() : null;
 
+	const snapshot = await getPostAccessSnapshot(postId);
+	if (!snapshot) {
+		return {
+			status: "error",
+			message: "게시글을 찾을 수 없습니다.",
+		};
+	}
+
+	if (role === "teacher") {
+		const currentClassroomId = snapshot.classroomId;
+		if (!currentClassroomId) {
+			return {
+				status: "error",
+				message: "담당 반이 아닌 게시글은 수정할 수 없습니다.",
+			};
+		}
+		const assignedCurrent = await isTeacherAssignedToClassroom(session.user.id, currentClassroomId);
+		const assignedNew =
+			data.classroomId === currentClassroomId ||
+			(await isTeacherAssignedToClassroom(session.user.id, data.classroomId));
+
+		if (!assignedCurrent || !assignedNew) {
+			return {
+				status: "error",
+				message: "담당 반 게시글만 수정할 수 있습니다.",
+			};
+		}
+	}
+
 	try {
 		const content = markdownToParagraphs(data.contentMarkdown);
+		const nextAudienceScope =
+			role === "admin"
+				? data.audienceScope
+				: snapshot.audienceScope === "all"
+					? "all"
+					: "classroom";
 
 		const updated = await db`
 			UPDATE class_posts
@@ -230,6 +364,8 @@ export async function updateClassPostAction(_: FormState, formData: FormData): P
 				summary = ${data.summary ?? null},
 				content = ${content},
 				publish_at = ${publishAtValue},
+				audience_scope = ${nextAudienceScope},
+				updated_by = ${session.user.id},
 				updated_at = now()
 			WHERE id = ${postId}
 			RETURNING id
@@ -239,20 +375,26 @@ export async function updateClassPostAction(_: FormState, formData: FormData): P
 			return { status: "error", message: "게시글을 찾을 수 없습니다." };
 		}
 
-		await db`DELETE FROM class_post_attachments WHERE post_id = ${postId}`;
-
+		await db`DELETE FROM class_post_media WHERE post_id = ${postId}`;
 		const attachments = data.attachments.filter((attachment) => attachment.url);
-
-		for (const attachment of attachments) {
+		for (const [index, attachment] of attachments.entries()) {
 			await db`
-				INSERT INTO class_post_attachments (post_id, file_url, label)
-				VALUES (${postId}, ${attachment.url}, ${attachment.label ?? null})
+				INSERT INTO class_post_media (post_id, file_url, caption, alt_text, media_type, display_order)
+				VALUES (
+					${postId},
+					${attachment.url},
+					${attachment.label ?? null},
+					${attachment.label ?? null},
+					${"image"},
+					${index}
+				)
 			`;
 		}
 
 		revalidatePath("/admin/class-posts");
 		revalidatePath("/parents");
 		revalidatePath("/parents/posts");
+		revalidatePath("/stories/class-news");
 
 		return {
 			status: "success",
@@ -265,4 +407,67 @@ export async function updateClassPostAction(_: FormState, formData: FormData): P
 			message: "게시글 수정 중 문제가 발생했습니다.",
 		};
 	}
+}
+
+const changeStatusSchema = z.object({
+	postId: z.string().uuid(),
+	status: z.enum(["draft", "published", "archived"]),
+});
+
+export async function changeClassPostStatusAction(_: FormState, formData: FormData): Promise<FormState> {
+	const session = await auth();
+	const role = session?.user?.role ?? "";
+
+	if (!session) {
+		return { status: "error", message: "권한이 필요합니다." };
+	}
+
+	const parsed = changeStatusSchema.safeParse({
+		postId: formData.get("postId")?.toString() ?? "",
+		status: formData.get("status")?.toString() ?? "",
+	});
+
+	if (!parsed.success) {
+		return {
+			status: "error",
+			message: "상태를 변경할 수 없습니다.",
+		};
+	}
+
+	const { postId, status } = parsed.data;
+	const snapshot = await getPostAccessSnapshot(postId);
+	if (!snapshot) {
+		return { status: "error", message: "게시글을 찾을 수 없습니다." };
+	}
+
+	if (role === "teacher") {
+		if (status !== "draft") {
+			return { status: "error", message: "게시나 숨김은 관리자만 가능합니다." };
+		}
+		if (!snapshot.classroomId) {
+			return { status: "error", message: "담당 반이 아닌 게시글입니다." };
+		}
+		const allowed = await isTeacherAssignedToClassroom(session.user.id, snapshot.classroomId);
+		if (!allowed) {
+			return { status: "error", message: "담당 반 게시글만 변경할 수 있습니다." };
+		}
+	}
+
+	await db`
+		UPDATE class_posts
+		SET
+			status = ${status},
+			published_at = CASE WHEN ${status} = 'published' THEN now() ELSE NULL END,
+			published_by = CASE WHEN ${status} = 'published' THEN ${session.user.id}::uuid ELSE NULL END,
+			updated_by = ${session.user.id},
+			updated_at = now()
+		WHERE id = ${postId}
+	`;
+
+	revalidatePath("/admin/class-posts");
+	revalidatePath("/parents");
+	revalidatePath("/parents/posts");
+	revalidatePath("/stories/class-news");
+
+	return { status: "success", message: "상태가 변경되었습니다." };
 }

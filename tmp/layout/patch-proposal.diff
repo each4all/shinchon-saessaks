@@ -1,0 +1,528 @@
+diff --git a/src/components/site/site-header.client.tsx b/src/components/site/site-header.client.tsx
+index 91ee8e9..f89d43d 100644
+--- a/src/components/site/site-header.client.tsx
++++ b/src/components/site/site-header.client.tsx
+@@ -1,20 +1,102 @@
+ "use client";
+ 
+ import Link from "next/link";
+-import { useCallback, useEffect, useMemo, useState } from "react";
++import {
++	useCallback,
++	useEffect,
++	useMemo,
++	useRef,
++	useState,
++	type FocusEvent,
++} from "react";
+ import { usePathname } from "next/navigation";
+ import { signOut, useSession } from "next-auth/react";
+-import { ArrowRight, LogIn, LogOut, Menu, X } from "lucide-react";
++import {
++	ArrowRight,
++	ChevronDown,
++	LogIn,
++	LogOut,
++	Menu,
++	X,
++} from "lucide-react";
+ import type { Session } from "next-auth";
+ 
+ import { Button } from "@/components/ui/button";
+ 
+-const navItems = [
+-	{ href: "/#about", label: "유치원 소개" },
+-	{ href: "/#programs", label: "교육 프로그램" },
+-	{ href: "/#admissions", label: "입학 안내" },
+-	{ href: "/news", label: "알림마당" },
+-	{ href: "/#visit", label: "오시는 길" },
++type NavItem = {
++	label: string;
++	href?: string;
++	children?: NavItem[];
++};
++
++const navTree: NavItem[] = [
++	{
++		label: "유치원 소개",
++		href: "/#about",
++		children: [
++			{
++				label: "인사말",
++				href: "/#greetings",
++				children: [
++					{ label: "이사장", href: "/#greetings-chair" },
++					{ label: "원장", href: "/#greetings-principal" },
++					{ label: "교사", href: "/#greetings-teachers" },
++				],
++			},
++			{ label: "연혁", href: "/#history" },
++			{ label: "원훈", href: "/#motto" },
++			{ label: "본원의 특색", href: "/#features" },
++			{ label: "입학안내", href: "/#admissions" },
++			{ label: "찾아오시는 길", href: "/#visit" },
++		],
++	},
++	{
++		label: "교육환경",
++		href: "/#environment",
++		children: [
++			{ label: "실내", href: "/#environment-indoor" },
++			{ label: "실외", href: "/#environment-outdoor" },
++		],
++	},
++	{
++		label: "교육과정",
++		href: "/#programs",
++		children: [
++			{ label: "하루일과", href: "/#daily-routine" },
++			{ label: "몬테소리 교육", href: "/#montessori" },
++			{ label: "기독교 유아교육", href: "/#christian-education" },
++			{ label: "생태 유아교육", href: "/#eco-education" },
++			{ label: "부모교육", href: "/#parent-program" },
++		],
++	},
++	{
++		label: "우리들 이야기",
++		href: "/stories/class-news",
++		children: [
++			{ label: "반별 교육활동", href: "/stories/class-news" },
++			{ label: "연령별 교육활동", href: "/stories/class-news#age" },
++			{ label: "교육행사", href: "/news/events" },
++		],
++	},
++	{
++		label: "신촌소식",
++		href: "/news",
++		children: [
++			{ label: "공지사항", href: "/news/announcements" },
++			{ label: "가정통신문", href: "/news/newsletter" },
++			{ label: "월별행사안내", href: "/news/events" },
++			{
++				label: "급식게시판",
++				href: "/meals",
++				children: [
++					{ label: "오늘의 식단", href: "/meals" },
++					{ label: "급식소통함", href: "/parents/meals" },
++				],
++			},
++			{ label: "각종서식", href: "/parents/resources" },
++			{ label: "유치원 운영 위원회", href: "/parents/resources?section=committee" },
++		],
++	},
+ ];
+ 
+ type SiteHeaderClientProps = {
+@@ -29,8 +111,63 @@ type CtaButton = {
+ 	className?: string;
+ };
+ 
++function DesktopSubmenu({ items }: { items: NavItem[] }) {
++	return (
++		<div
++			data-submenu
++			className="flex w-fit min-w-[160px] max-w-[240px] flex-col gap-2 rounded-[var(--radius-md)] bg-white/98 p-4"
++		>
++			{items.map((item) => (
++				<div key={item.label} className="space-y-1">
++					<Link
++						href={item.href ?? "#"}
++						className="block text-sm font-semibold text-[var(--brand-navy)] transition hover:text-[var(--brand-primary)]"
++					>
++						{item.label}
++					</Link>
++					{item.children?.length ? (
++						<ul className="space-y-1 text-[13px] text-muted-foreground">
++							{item.children.map((child) => (
++								<li key={`${item.label}>${child.label}`}>
++									<Link
++										href={child.href ?? "#"}
++										className="block whitespace-nowrap rounded px-2 py-1 transition hover:bg-[var(--brand-mint)]/25 hover:text-[var(--brand-primary)]"
++									>
++										{child.label}
++									</Link>
++								</li>
++							))}
++						</ul>
++					) : null}
++				</div>
++			))}
++		</div>
++	);
++}
++
+ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
+ 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
++	const [openMenu, setOpenMenu] = useState<string | null>(null);
++	const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({});
++	const closeMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
++
++	const cancelPendingClose = useCallback(() => {
++		if (closeMenuTimerRef.current) {
++			clearTimeout(closeMenuTimerRef.current);
++			closeMenuTimerRef.current = null;
++		}
++	}, []);
++
++	const scheduleCloseMenu = useCallback(
++		(label: string) => {
++			cancelPendingClose();
++			closeMenuTimerRef.current = setTimeout(() => {
++				setOpenMenu((current) => (current === label ? null : current));
++			}, 180);
++		},
++		[cancelPendingClose],
++	);
++
+ 	const pathname = usePathname();
+ 	const { data: clientSession, status } = useSession();
+ 	const session = status === "loading" ? initialSession : clientSession ?? initialSession;
+@@ -47,11 +184,33 @@ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
+ 		};
+ 	}, [isMobileNavOpen]);
+ 
+-	const closeMobileNav = () => setIsMobileNavOpen(false);
++	useEffect(() => () => cancelPendingClose(), [cancelPendingClose]);
+ 
+-	const handleSignOut = useCallback(() => {
++	useEffect(() => {
++		const handleKeyDown = (event: KeyboardEvent) => {
++			if (event.key === "Escape") {
++				setOpenMenu(null);
++			}
++		};
++		window.addEventListener("keydown", handleKeyDown);
++		return () => window.removeEventListener("keydown", handleKeyDown);
++	}, []);
++
++	const closeMobileNav = useCallback(() => {
+ 		setIsMobileNavOpen(false);
++		setMobileExpanded({});
++	}, []);
++
++	const handleSignOut = useCallback(() => {
++		closeMobileNav();
+ 		void signOut({ callbackUrl: "/member/login" });
++	}, [closeMobileNav]);
++
++	const toggleMobileSection = useCallback((key: string) => {
++		setMobileExpanded((prev) => ({
++			...prev,
++			[key]: !prev[key],
++		}));
+ 	}, []);
+ 
+ 	const makeAdminConsoleCta = (variant: CtaButton["variant"]): CtaButton => ({
+@@ -135,6 +294,51 @@ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
+ 		};
+ 	}, [isAuthenticated]);
+ 
++	const handleDesktopBlur = useCallback((event: FocusEvent<HTMLDivElement>) => {
++		const nextTarget = event.relatedTarget as Node | null;
++		if (!event.currentTarget.contains(nextTarget)) {
++			setOpenMenu(null);
++		}
++	}, []);
++
++	const renderMobileItem = (item: NavItem, ancestors: string[]): JSX.Element => {
++		const key = ancestors.join(">");
++		const hasChildren = Boolean(item.children?.length);
++		const isExpanded = mobileExpanded[key];
++
++		return (
++			<div key={key} className="space-y-2">
++				<div className="flex items-start justify-between gap-2">
++					<Link
++						href={item.href ?? "#"}
++						className="flex-1 text-base font-medium text-[var(--brand-navy)]"
++						onClick={closeMobileNav}
++					>
++						{item.label}
++					</Link>
++					{hasChildren ? (
++						<button
++							type="button"
++							className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--brand-navy)] transition hover:bg-[var(--brand-primary)]/10"
++							aria-expanded={isExpanded}
++							onClick={() => toggleMobileSection(key)}
++						>
++							<ChevronDown
++								className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
++							/>
++						</button>
++					) : null}
++				</div>
++
++				{hasChildren && isExpanded ? (
++					<div className="space-y-2 border-l border-[var(--border)] pl-4">
++						{item.children!.map((child) => renderMobileItem(child, [...ancestors, child.label]))}
++					</div>
++				) : null}
++			</div>
++		);
++	};
++
+ 	return (
+ 		<header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/85 backdrop-blur">
+ 			<div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10 lg:px-12">
+@@ -145,51 +349,97 @@ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
+ 					<span className="text-xs text-muted-foreground">Shinchon Montessori Kindergarten</span>
+ 				</Link>
+ 
+-				<nav className="hidden items-center gap-6 text-sm font-medium text-[var(--brand-navy)] md:flex">
+-					{navItems.map((item) => (
+-						<Link
+-							key={item.href}
+-							href={item.href}
+-							className="transition hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
++			<nav className="relative hidden flex-nowrap items-center gap-4 text-sm font-medium text-[var(--brand-navy)] md:flex lg:gap-6">
++				{navTree.map((item) => {
++					const hasChildren = Boolean(item.children?.length);
++					return (
++						<div
++							key={item.label}
++							className="relative"
++							onMouseEnter={() => {
++								if (!hasChildren) {
++									return;
++								}
++								cancelPendingClose();
++								setOpenMenu(item.label);
++							}}
++							onMouseLeave={(event) => {
++								if (!hasChildren) {
++									return;
++								}
++								const nextTarget = event.relatedTarget as Node | null;
++								if (nextTarget && event.currentTarget.contains(nextTarget)) {
++									return;
++								}
++								scheduleCloseMenu(item.label);
++							}}
++							onFocus={() => {
++								if (!hasChildren) {
++									return;
++								}
++								cancelPendingClose();
++								setOpenMenu(item.label);
++							}}
++							onBlur={handleDesktopBlur}
+ 						>
+-							{item.label}
+-						</Link>
+-					))}
+-				</nav>
+-
+-					<div className="hidden items-center gap-2 md:flex">
+-						{authAction.type === "login" ? (
+-							<Button
+-								variant="outline"
+-								size="sm"
+-								className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+-								asChild
+-							>
+-								<Link href={authAction.href}>
+-									<LogIn className="size-4" />
+-									{authAction.label}
+-								</Link>
+-							</Button>
+-						) : (
+-							<Button
+-								variant="outline"
+-								size="sm"
+-								className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+-								onClick={handleSignOut}
++							<Link
++								href={item.href ?? "#"}
++								className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 transition hover:bg-[var(--brand-mint)]/30 hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:px-3"
+ 							>
+-								<LogOut className="size-4" />
+-								{authAction.label}
+-							</Button>
+-						)}
++								<span className="whitespace-nowrap">{item.label}</span>
++								{hasChildren ? (
++									<ChevronDown
++										className={`h-3.5 w-3.5 transition-transform ${
++											openMenu === item.label ? "rotate-180" : ""
++										}`}
++									/>
++								) : null}
++							</Link>
+ 
+-						{desktopCtas.map((cta) => (
+-							<Button
+-								key={cta.key}
+-								variant={cta.variant}
++						{hasChildren && openMenu === item.label ? (
++							<div
++								className="absolute left-0 top-full mt-2 rounded-2xl border border-[var(--border)] bg-white/95 shadow-[var(--shadow-soft)]"
++									onMouseEnter={() => {
++										cancelPendingClose();
++										setOpenMenu(item.label);
++									}}
++									onMouseLeave={() => scheduleCloseMenu(item.label)}
++								>
++									<DesktopSubmenu items={item.children ?? []} />
++								</div>
++							) : null}
++						</div>
++					);
++				})}
++			</nav>
++
++				<div className="hidden items-center gap-2 md:flex">
++					{authAction.type === "login" ? (
++						<Button
++							variant="outline"
+ 							size="sm"
+-							className={cta.className}
++							className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+ 							asChild
+ 						>
++							<Link href={authAction.href}>
++								<LogIn className="size-4" />
++								{authAction.label}
++							</Link>
++						</Button>
++					) : (
++						<Button
++							variant="outline"
++							size="sm"
++							className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
++							onClick={handleSignOut}
++						>
++							<LogOut className="size-4" />
++							{authAction.label}
++						</Button>
++					)}
++
++					{desktopCtas.map((cta) => (
++						<Button key={cta.key} variant={cta.variant} size="sm" className={cta.className} asChild>
+ 							<Link href={cta.href}>{cta.label}</Link>
+ 						</Button>
+ 					))}
+@@ -219,63 +469,56 @@ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
+ 						</button>
+ 					</div>
+ 
+-					<nav className="flex flex-col gap-6 px-6 py-6 text-base font-medium text-[var(--brand-navy)]">
+-						{navItems.map((item) => (
+-							<Link
+-								key={item.href}
+-								href={item.href}
+-								className="rounded-[var(--radius-md)] bg-[var(--brand-mint)]/25 px-4 py-3 transition hover:bg-[var(--brand-mint)]/40"
+-								onClick={closeMobileNav}
+-							>
+-								{item.label}
+-							</Link>
+-						))}
+-
+-							<div className="mt-2 border-t border-[var(--border)] pt-6 text-sm text-muted-foreground">
+-								<p className="mb-3 font-semibold text-[var(--brand-navy)]">빠른 연결</p>
+-								<div className="flex flex-col gap-3">
+-									{authAction.type === "login" ? (
+-										<Button
+-											variant="outline"
+-											size="sm"
+-											className="justify-center gap-2 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+-											asChild
+-										>
+-											<Link href={authAction.href} onClick={closeMobileNav}>
+-												<LogIn className="size-4" />
+-												{authAction.label}
+-											</Link>
+-										</Button>
+-									) : (
+-										<Button
+-											variant="outline"
+-											size="sm"
+-											className="inline-flex justify-center gap-2 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+-											onClick={handleSignOut}
+-										>
+-											<LogOut className="size-4" />
++					<div className="flex h-[calc(100%-64px)] flex-col overflow-y-auto px-6 py-6">
++						<nav className="flex flex-col gap-6 text-base font-medium text-[var(--brand-navy)]">
++							{navTree.map((item) => renderMobileItem(item, [item.label]))}
++						</nav>
++
++						<div className="mt-8 border-t border-[var(--border)] pt-6 text-sm text-muted-foreground">
++							<p className="mb-3 font-semibold text-[var(--brand-navy)]">빠른 연결</p>
++							<div className="flex flex-col gap-3">
++								{authAction.type === "login" ? (
++									<Button
++										variant="outline"
++										size="sm"
++										className="justify-center gap-2 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
++										asChild
++									>
++										<Link href={authAction.href} onClick={closeMobileNav}>
++											<LogIn className="size-4" />
+ 											{authAction.label}
+-										</Button>
+-									)}
+-								</div>
++										</Link>
++									</Button>
++								) : (
++									<Button
++										variant="outline"
++										size="sm"
++										className="inline-flex justify-center gap-2 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
++										onClick={handleSignOut}
++									>
++										<LogOut className="size-4" />
++										{authAction.label}
++									</Button>
++								)}
+ 							</div>
+-						</nav>
++						</div>
+ 
+-					<div className="flex flex-col gap-3 border-t border-[var(--border)] px-6 py-6">
+-						{mobileCtas.map((cta) => (
+-							<Button
+-								key={cta.key}
+-								size="lg"
+-								variant={cta.variant}
+-								className={cta.className}
+-								asChild
+-							>
+-								<Link href={cta.href} onClick={closeMobileNav}>
+-									{cta.label}
+-									{cta.key === "admissions" ? <ArrowRight className="ml-2 size-4" /> : null}
+-								</Link>
+-							</Button>
+-						))}
++						<div className="mt-6 flex flex-col gap-3 border-t border-[var(--border)] pt-6">
++							{mobileCtas.map((cta) => (
++								<Button
++									key={cta.key}
++									size="lg"
++									variant={cta.variant}
++									className={cta.className}
++									asChild
++								>
++									<Link href={cta.href} onClick={closeMobileNav}>
++										{cta.label}
++										{cta.key === "admissions" ? <ArrowRight className="ml-2 size-4" /> : null}
++									</Link>
++								</Button>
++							))}
++						</div>
+ 					</div>
+ 				</div>
+ 			) : null}
+diff --git a/src/components/ui/badge.tsx b/src/components/ui/badge.tsx
+index 70f9db5..60422ee 100644
+--- a/src/components/ui/badge.tsx
++++ b/src/components/ui/badge.tsx
+@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
+ import { cn } from "@/lib/utils";
+ 
+ const badgeVariants = cva(
+-	"inline-flex w-fit shrink-0 items-center gap-1 rounded-[var(--radius-pill)] border px-[var(--space-sm)] py-[0.35rem] text-[11px] font-semibold uppercase tracking-wide transition-[background,color,box-shadow,transform] duration-200 [&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-60",
++	"inline-flex w-fit shrink-0 items-center gap-1 rounded-[var(--radius-pill)] border px-[var(--space-sm)] py-[0.35rem] text-[11px] font-semibold leading-none normal-case tracking-[0.08em] whitespace-nowrap transition-[background,color,box-shadow,transform] duration-200 [&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-60",
+ 	{
+ 		variants: {
+ 			variant: {

@@ -15,6 +15,41 @@
       "when": 1761885950000,
       "tag": "0004_user_enums",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762100000000,
+      "tag": "0005_phase2_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1762338000000,
+      "tag": "0006_greeting_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763000000000,
+      "tag": "0007_greeting_profile_secondary_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1763005000000,
+      "tag": "0008_greeting_profile_lead_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1763020000000,
+      "tag": "0009_drop_greeting_profiles",
+      "breakpoints": true
     }
   ]
 }

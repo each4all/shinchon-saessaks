@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { getClassPost, getClassrooms } from "@/lib/data/class-posts-repository";
+import { getClassPost, getClassrooms, getTeacherClassrooms } from "@/lib/data/class-posts-repository";
 import { auth } from "@/lib/auth";
 
 import { EditClassPostForm, type ClassPostFormValues } from "../../_components/create-class-post-form";
@@ -13,15 +13,32 @@ type EditClassPostPageProps = {
 
 export default async function EditClassPostPage({ params }: EditClassPostPageProps) {
 	const session = await auth();
-	if (!session || session.user?.role !== "admin") {
+	if (!session) {
 		redirect("/member/login?redirect=/admin/class-posts");
 	}
+	const role = session.user?.role;
+	const userId = session.user?.id ?? "";
 
 	const { id } = await params;
-	const [classrooms, post] = await Promise.all([getClassrooms(), getClassPost(id)]);
+	let classrooms = await getClassrooms();
+	const post = await getClassPost(id);
 
 	if (!post) {
 		notFound();
+	}
+
+	if (role === "teacher") {
+		const teacherClassrooms = await getTeacherClassrooms(userId);
+		const allowedIds = new Set(teacherClassrooms.map((classroom) => classroom.id));
+
+		if (!allowedIds.has(post.classroomId ?? "")) {
+			redirect("/admin/class-posts");
+		}
+
+		classrooms = teacherClassrooms;
+	}
+	if (role !== "admin" && role !== "teacher") {
+		redirect("/admin");
 	}
 
 	const initialValues: ClassPostFormValues = {
@@ -31,6 +48,7 @@ export default async function EditClassPostPage({ params }: EditClassPostPagePro
 		summary: post.summary ?? "",
 		publishAt: post.publishAt ? post.publishAt.toISOString() : null,
 		contentMarkdown: post.content.join("\n\n"),
+		audienceScope: post.audienceScope,
 		attachments: post.attachments.map((attachment) => ({
 			label: attachment.label ?? "",
 			url: attachment.fileUrl,
@@ -50,7 +68,7 @@ export default async function EditClassPostPage({ params }: EditClassPostPagePro
 				</Button>
 			</div>
 
-			<EditClassPostForm classrooms={classrooms} initialValues={initialValues} />
+			<EditClassPostForm classrooms={classrooms} initialValues={initialValues} role={role ?? "guest"} />
 		</div>
 	);
 }

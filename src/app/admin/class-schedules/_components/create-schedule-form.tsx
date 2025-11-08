@@ -7,36 +7,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Classroom } from "@/lib/data/class-posts-repository";
 
-import { createScheduleAction, initialFormState, type FormState } from "../actions";
+import { createScheduleAction } from "../actions";
+import { initialFormState, type FormState } from "../../form-state";
 
-export function CreateScheduleForm({ classrooms }: { classrooms: Classroom[] }) {
-	const [formState, formAction, pending] = useActionState<FormState, FormData>(
-		createScheduleAction,
-		initialFormState,
-	);
+type CreateScheduleFormProps = {
+	classrooms: Classroom[];
+	role?: string;
+	disabled?: boolean;
+};
+
+export function CreateScheduleForm({ classrooms, role = "admin", disabled = false }: CreateScheduleFormProps) {
+	const [formState, formAction, pending] = useActionState<FormState, FormData>(createScheduleAction, initialFormState);
 	const formRef = useRef<HTMLFormElement>(null);
 
 	useEffect(() => {
-		if (formState.status === "success") {
+		if (formState.status === "success" && !disabled) {
 			formRef.current?.reset();
 		}
-	}, [formState.status]);
+	}, [formState.status, disabled]);
 
 	return (
 		<section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/90 p-6 shadow-[var(--shadow-soft)]">
 			<div className="flex flex-col gap-2">
 				<h2 className="text-xl font-semibold text-[var(--brand-navy)]">일정 등록</h2>
-				<p className="text-sm text-muted-foreground">월간 행사, 방문 수업, 운영위원회 등 일정을 등록하세요.</p>
+				<p className="text-sm text-muted-foreground">
+					월간 행사, 방문 수업, 운영위원회 등 일정을 등록하세요. 교사는 담당 반 일정만 등록할 수 있습니다.
+				</p>
+				{disabled ? (
+					<p className="rounded-[var(--radius-sm)] border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+						담당 반이 배정되어야 새 일정을 등록할 수 있습니다. 관리자에게 문의해 주세요.
+					</p>
+				) : null}
 			</div>
 			<form ref={formRef} action={formAction} className="mt-6 grid gap-4 md:grid-cols-2">
 				<div className="grid gap-2">
-					<Label htmlFor="classroomId">대상 반 (선택)</Label>
+					<Label htmlFor="classroomId">대상 반</Label>
 					<select
 						id="classroomId"
 						name="classroomId"
 						className="h-11 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-3 text-sm text-[var(--brand-navy)]"
+						disabled={disabled}
+						required={role === "teacher"}
 					>
-						<option value="">전체</option>
+						<option value="">{role === "teacher" ? "담당 반만 선택 가능" : "전체"}</option>
 						{classrooms.map((classroom) => (
 							<option key={classroom.id} value={classroom.id}>
 								{classroom.name}
@@ -47,17 +60,76 @@ export function CreateScheduleForm({ classrooms }: { classrooms: Classroom[] }) 
 
 				<div className="grid gap-2">
 					<Label htmlFor="title">제목</Label>
-					<Input id="title" name="title" placeholder="예) 11월 운영위원회" required />
+					<Input id="title" name="title" placeholder="예) 11월 운영위원회" required disabled={disabled} />
 				</div>
 
 				<div className="grid gap-2">
 					<Label htmlFor="description">설명</Label>
-					<Input id="description" name="description" placeholder="간단한 설명" />
+					<Input id="description" name="description" placeholder="간단한 설명" disabled={disabled} />
 				</div>
 
 				<div className="grid gap-2">
 					<Label htmlFor="location">장소</Label>
-					<Input id="location" name="location" placeholder="예) 본관 2층 회의실" />
+					<Input id="location" name="location" placeholder="예) 본관 2층 회의실" disabled={disabled} />
+				</div>
+
+				<div className="grid gap-2">
+					<Label htmlFor="eventType">행사 유형</Label>
+					<select
+						id="eventType"
+						name="eventType"
+						defaultValue="other"
+						className="h-11 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-3 text-sm text-[var(--brand-navy)]"
+						disabled={disabled}
+					>
+						<option value="notice">공지</option>
+						<option value="field_trip">체험학습/야외활동</option>
+						<option value="workshop">워크숍/방문수업</option>
+						<option value="holiday">휴일/휴원</option>
+						<option value="other">기타</option>
+					</select>
+				</div>
+
+				<div className="grid gap-2">
+					<Label htmlFor="audienceScope">공개 범위</Label>
+					<select
+						id="audienceScope"
+						name="audienceScope"
+						defaultValue="parents"
+						className="h-11 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-3 text-sm text-[var(--brand-navy)]"
+						disabled={disabled}
+					>
+						<option value="parents">학부모</option>
+						<option value="all">전체 공개</option>
+						<option value="staff">교직원 전용</option>
+					</select>
+				</div>
+
+				<div className="grid gap-2">
+					{role === "teacher" ? (
+						<>
+							<span className="text-sm font-medium text-[var(--brand-navy)]">상태</span>
+							<input type="hidden" name="status" value="draft" />
+							<p className="rounded-[var(--radius-sm)] border border-[var(--border)]/60 bg-[rgba(241,239,255,0.6)] px-3 py-2 text-xs text-muted-foreground">
+								교사가 등록한 일정은 초안으로 저장되며, 관리자가 게시 승인 후 학부모에게 노출됩니다.
+							</p>
+						</>
+					) : (
+						<>
+							<Label htmlFor="status">상태</Label>
+							<select
+								id="status"
+								name="status"
+								defaultValue="published"
+								className="h-11 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-3 text-sm text-[var(--brand-navy)]"
+								disabled={disabled}
+							>
+								<option value="draft">초안</option>
+								<option value="published">게시</option>
+								<option value="cancelled">취소</option>
+							</select>
+						</>
+					)}
 				</div>
 
 				<div className="grid gap-2">
@@ -68,6 +140,7 @@ export function CreateScheduleForm({ classrooms }: { classrooms: Classroom[] }) 
 						type="datetime-local"
 						required
 						className="h-11 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-3 text-sm text-[var(--brand-navy)]"
+						disabled={disabled}
 					/>
 				</div>
 
@@ -78,6 +151,7 @@ export function CreateScheduleForm({ classrooms }: { classrooms: Classroom[] }) 
 						name="endDate"
 						type="datetime-local"
 						className="h-11 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-3 text-sm text-[var(--brand-navy)]"
+						disabled={disabled}
 					/>
 				</div>
 
@@ -102,7 +176,7 @@ export function CreateScheduleForm({ classrooms }: { classrooms: Classroom[] }) 
 					) : null}
 
 					<div className="flex flex-wrap items-center gap-3">
-						<Button type="submit" disabled={pending}>
+						<Button type="submit" disabled={pending || disabled}>
 							{pending ? "등록 중..." : "등록"}
 						</Button>
 						<span className="text-xs text-muted-foreground">등록 후 학부모 포털 일정이 갱신됩니다.</span>

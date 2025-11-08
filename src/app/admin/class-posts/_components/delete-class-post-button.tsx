@@ -4,7 +4,8 @@ import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-import { deleteClassPostAction, initialFormState, type FormState } from "../actions";
+import { deleteClassPostAction } from "../actions";
+import { initialFormState, type FormState } from "../../form-state";
 
 export function DeleteClassPostButton({ postId }: { postId: string }) {
 	const [, formAction, pending] = useActionState<FormState, FormData>(

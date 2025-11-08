@@ -4,7 +4,8 @@ import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-import { deleteScheduleAction, initialFormState, type FormState } from "../actions";
+import { deleteScheduleAction } from "../actions";
+import { initialFormState, type FormState } from "../../form-state";
 
 export function DeleteScheduleButton({ scheduleId }: { scheduleId: string }) {
 	const [, formAction, pending] = useActionState<FormState, FormData>(

@@ -69,6 +69,7 @@ const targetChildren = [
 
 	const [parent] = (await db`SELECT id FROM users WHERE email = 'parent-active@playwright.test'`).rows;
 const [admin] = (await db`SELECT id FROM users WHERE email = 'admin@playwright.test'`).rows;
+const [nutrition] = (await db`SELECT id FROM users WHERE email = 'nutrition@playwright.test'`).rows;
 
 	if (parent) {
 		for (const child of childRows) {
@@ -124,13 +125,17 @@ const [admin] = (await db`SELECT id FROM users WHERE email = 'admin@playwright.t
 				SET summary = ${post.summary},
 					content = ${contentJson},
 					publish_at = now(),
+					status = 'published',
+					published_at = now(),
+					published_by = ${admin?.id ?? null},
+					updated_by = ${admin?.id ?? null},
 					updated_at = now()
 				WHERE id = ${postId}
 			`;
 		} else {
 			const insertedPost = await db`
-				INSERT INTO class_posts (classroom_id, author_id, title, summary, content, publish_at)
-				VALUES (${post.classroomId}, ${admin?.id ?? null}, ${post.title}, ${post.summary}, ${contentJson}, now())
+				INSERT INTO class_posts (classroom_id, author_id, title, summary, content, publish_at, status, published_at, published_by)
+				VALUES (${post.classroomId}, ${admin?.id ?? null}, ${post.title}, ${post.summary}, ${contentJson}, now(), 'published', now(), ${admin?.id ?? null})
 				RETURNING id
 			`;
 			postId = insertedPost.rows[0]?.id as string;
@@ -138,12 +143,19 @@ const [admin] = (await db`SELECT id FROM users WHERE email = 'admin@playwright.t
 
 		if (!postId) continue;
 
-		await db`DELETE FROM class_post_attachments WHERE post_id = ${postId}`;
+		await db`DELETE FROM class_post_media WHERE post_id = ${postId}`;
 
-		for (const attachment of post.attachments) {
+		for (const [index, attachment] of post.attachments.entries()) {
 			await db`
-				INSERT INTO class_post_attachments (post_id, file_url, label)
-				VALUES (${postId}, ${attachment.url}, ${attachment.label ?? null})
+				INSERT INTO class_post_media (post_id, file_url, caption, alt_text, media_type, display_order)
+				VALUES (
+					${postId},
+					${attachment.url},
+					${attachment.label ?? null},
+					${attachment.label ?? null},
+					${"image"},
+					${index}
+				)
 			`;
 		}
 	}
@@ -185,6 +197,112 @@ const [admin] = (await db`SELECT id FROM users WHERE email = 'admin@playwright.t
 			await db`
 				INSERT INTO class_schedules (classroom_id, title, description, start_date, end_date, location)
 				VALUES (${schedule.classroomId ?? null}, ${schedule.title}, ${schedule.description ?? null}, ${schedule.startDate.toISOString()}, ${schedule.endDate?.toISOString() ?? null}, ${schedule.location ?? null})
+			`;
+		}
+	}
+
+	const mealPlanSeeds = [
+		{
+			menuDate: new Date(Date.UTC(2025, 9, 6)),
+			mealType: "lunch",
+			menuItems: ["현미밥", "어묵국", "닭가슴살채소볶음", "계란찜", "사과"],
+			allergens: ["계란", "대두"],
+			notes: "전체 공개 식단 예시입니다. 알레르기 1,5번 포함.",
+			audienceScope: "all",
+			attachments: [
+				{
+					label: "10월 2주 식단표 (PDF)",
+					url: "https://www.shinchonkid.com/web/upload/meal/2025-10-week2.pdf",
+				},
+			],
+		},
+		{
+			menuDate: new Date(Date.UTC(2025, 9, 7)),
+			mealType: "snack",
+			menuItems: ["현미떡", "우유"],
+			allergens: ["우유"],
+			notes: "학부모 전용 간식 정보입니다.",
+			audienceScope: "parents",
+			attachments: [],
+		},
+	];
+
+	for (const mealPlan of mealPlanSeeds) {
+		const menuDateIso = mealPlan.menuDate.toISOString();
+		const menuDateDay = menuDateIso.slice(0, 10);
+		const audienceScope = mealPlan.audienceScope;
+
+		const existingPlan = await db`
+			SELECT id FROM meal_plans
+			WHERE DATE(menu_date) = ${menuDateDay}::date
+				AND meal_type = ${mealPlan.mealType}
+			LIMIT 1
+		`;
+
+		let planId = existingPlan.rows[0]?.id as string | undefined;
+
+		if (planId) {
+			await db`
+				UPDATE meal_plans
+				SET
+					menu_date = ${menuDateIso},
+					menu_items = ${JSON.stringify(mealPlan.menuItems)},
+					allergens = ${mealPlan.allergens.length > 0 ? JSON.stringify(mealPlan.allergens) : null},
+					notes = ${mealPlan.notes ?? null},
+					audience_scope = ${audienceScope},
+					updated_by = ${nutrition?.id ?? admin?.id ?? null},
+					updated_at = now()
+				WHERE id = ${planId}
+			`;
+		} else {
+			const insertedPlan = await db`
+				INSERT INTO meal_plans (
+					menu_date,
+					meal_type,
+					menu_items,
+					allergens,
+					notes,
+					audience_scope,
+					created_by,
+					updated_by
+				)
+				VALUES (
+					${menuDateIso},
+					${mealPlan.mealType},
+					${JSON.stringify(mealPlan.menuItems)},
+					${mealPlan.allergens.length > 0 ? JSON.stringify(mealPlan.allergens) : null},
+					${mealPlan.notes ?? null},
+					${audienceScope},
+					${nutrition?.id ?? admin?.id ?? null},
+					${nutrition?.id ?? admin?.id ?? null}
+				)
+				RETURNING id
+			`;
+			planId = insertedPlan.rows[0]?.id as string | undefined;
+		}
+
+		if (!planId) {
+			continue;
+		}
+
+		await db`
+			DELETE FROM meal_plan_resources
+			WHERE plan_id = ${planId}
+		`;
+
+		for (const attachment of mealPlan.attachments) {
+			if (!attachment.url) {
+				continue;
+			}
+			await db`
+				INSERT INTO meal_plan_resources (plan_id, file_url, label, media_type)
+				VALUES (
+					${planId},
+					${attachment.url},
+					${attachment.label ?? null},
+					${attachment.url.toLowerCase().endsWith(".pdf") ? "document" : "image"}
+				)
+				ON CONFLICT DO NOTHING
 			`;
 		}
 	}
