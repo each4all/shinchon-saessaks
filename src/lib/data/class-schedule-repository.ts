@@ -36,6 +36,12 @@ export type ClassSchedule = {
 	resources: ScheduleResource[];
 };
 
+function isImageResource(resource: ScheduleResource) {
+	if (!resource.fileUrl) return false;
+	if (resource.mediaType && resource.mediaType.toLowerCase().includes("image")) return true;
+	return /\.(png|jpe?g|webp|gif)$/i.test(resource.fileUrl);
+}
+
 function parseJsonArray<T>(value: unknown, mapper: (item: Record<string, unknown>) => T): T[] {
 	if (!value) return [];
 
@@ -277,3 +283,23 @@ async function fetchSchedulesForParent(parentId: string, from?: Date, to?: Date)
 
 export const getSchedules = cache(fetchSchedules);
 export const getParentSchedules = cache(fetchSchedulesForParent);
+
+export const getPublicEventGallery = cache(
+	async (options?: { limit?: number; eventTypes?: string[] }) => {
+		const limit = options?.limit ?? 12;
+		const allowedTypes = new Set(options?.eventTypes ?? ["field_trip", "workshop", "notice", "other"]);
+		const schedules = await fetchSchedules({ includeDrafts: false, limit: limit * 3 });
+
+		return schedules
+			.filter((schedule) => schedule.status === "published")
+			.filter((schedule) => schedule.audienceScope === "all" || schedule.audienceScope === "parents")
+			.filter((schedule) => allowedTypes.has(schedule.eventType))
+			.map((schedule) => ({
+				...schedule,
+				resources: schedule.resources.filter((resource) => isImageResource(resource)),
+			}))
+			.filter((schedule) => schedule.resources.length > 0)
+			.sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+			.slice(0, limit);
+	},
+);

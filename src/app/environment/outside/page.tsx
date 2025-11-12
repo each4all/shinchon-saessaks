@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { EnvironmentGallery } from "@/components/environment/EnvironmentGallery";
+import { EnvironmentSlider } from "@/components/environment/EnvironmentSlider";
+import { EnvironmentSidebar } from "@/components/environment/EnvironmentSidebar";
 import { outdoorGallery } from "@/data/environment";
 
 export default function OutdoorEnvironmentPage() {
@@ -23,14 +24,13 @@ export default function OutdoorEnvironmentPage() {
 			</section>
 
 			<section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 sm:px-10 lg:px-12">
-				<div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/95 p-6 shadow-[var(--shadow-soft)]">
-					<p className="text-sm leading-relaxed text-muted-foreground">
-						창조의 뜰, 숲속놀이터, 기쁨의 텃밭 등 자연과 만나는 공간을 확대해 생태 감수성과 신체 활동을 길러 줍니다. 아래 갤러리에서 아이들이
-						마주하는 실외 공간을 확인하세요.
-					</p>
-				</div>
+				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+					<EnvironmentSidebar />
 
-				<EnvironmentGallery images={outdoorGallery} />
+					<article className="space-y-6">
+						<EnvironmentSlider images={outdoorGallery} />
+					</article>
+				</div>
 			</section>
 		</div>
 	);

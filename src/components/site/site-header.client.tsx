@@ -76,7 +76,7 @@ const navTree: NavItem[] = [
 		children: [
 			{ label: "반별 교육활동", href: "/stories/class-news" },
 			{ label: "연령별 교육활동", href: "/stories/class-news#age" },
-			{ label: "교육행사", href: "/news/events" },
+			{ label: "교육행사", href: "/stories/events" },
 		],
 	},
 	{

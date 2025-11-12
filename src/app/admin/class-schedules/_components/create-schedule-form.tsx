@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +19,28 @@ type CreateScheduleFormProps = {
 export function CreateScheduleForm({ classrooms, role = "admin", disabled = false }: CreateScheduleFormProps) {
 	const [formState, formAction, pending] = useActionState<FormState, FormData>(createScheduleAction, initialFormState);
 	const formRef = useRef<HTMLFormElement>(null);
+	const [imageFields, setImageFields] = useState<string[]>([""]);
 
 	useEffect(() => {
 		if (formState.status === "success" && !disabled) {
 			formRef.current?.reset();
+			startTransition(() => {
+				setImageFields([""]);
+			});
 		}
 	}, [formState.status, disabled]);
+
+	const handleImageChange = (index: number, value: string) => {
+		setImageFields((prev) => prev.map((field, idx) => (idx === index ? value : field)));
+	};
+
+	const addImageField = () => {
+		setImageFields((prev) => [...prev, ""]);
+	};
+
+	const removeImageField = (index: number) => {
+		setImageFields((prev) => (prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== index)));
+	};
 
 	return (
 		<section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/90 p-6 shadow-[var(--shadow-soft)]">
@@ -155,7 +171,43 @@ export function CreateScheduleForm({ classrooms, role = "admin", disabled = fals
 					/>
 				</div>
 
-				<div className="md:col-span-2 flex flex-col gap-3">
+				<div className="md:col-span-2 flex flex-col gap-4">
+					<div className="grid gap-2">
+						<Label>행사 갤러리 이미지 (선택)</Label>
+						<p className="text-xs text-muted-foreground">
+							이미지 URL을 붙여넣으면 우리들 이야기 &gt; 교육행사 갤러리에 표시됩니다. /images/events/ 경로나 외부 URL 모두 사용할 수 있습니다.
+						</p>
+						<div className="space-y-2">
+							{imageFields.map((value, idx) => (
+								<div key={`image-field-${idx}`} className="flex gap-2">
+									<Input
+										type="url"
+										name="imageUrls"
+										placeholder="예) /images/events/family-sports-2025/1761297789_232468.jpg"
+										value={value}
+										onChange={(event) => handleImageChange(idx, event.target.value)}
+										disabled={disabled}
+									/>
+									{imageFields.length > 1 ? (
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											onClick={() => removeImageField(idx)}
+											disabled={disabled}
+										>
+											<span aria-hidden>×</span>
+											<span className="sr-only">이미지 입력 제거</span>
+										</Button>
+									) : null}
+								</div>
+							))}
+						</div>
+						<Button type="button" variant="outline" size="sm" onClick={addImageField} disabled={disabled}>
+							이미지 입력 추가
+						</Button>
+					</div>
+
 					{formState.status === "error" ? (
 						<div className="rounded-[var(--radius-sm)] border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
 							<p className="font-semibold">{formState.message ?? "저장에 실패했습니다."}</p>

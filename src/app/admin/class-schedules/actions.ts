@@ -83,6 +83,11 @@ export async function createScheduleAction(_: FormState, formData: FormData): Pr
 		audienceScope: formData.get("audienceScope")?.toString() as z.infer<typeof createScheduleSchema>["audienceScope"],
 	});
 
+	const imageUrls = formData
+		.getAll("imageUrls")
+		.map((value) => (value ? value.toString().trim() : ""))
+		.filter((value) => value.length > 0);
+
 	if (!parsed.success) {
 		return {
 			status: "error",
@@ -106,7 +111,7 @@ export async function createScheduleAction(_: FormState, formData: FormData): Pr
 		const { startDate, endDate } = parseScheduleDates(parsed.data.startDate, parsed.data.endDate ?? null);
 		const effectiveStatus = role === "teacher" && parsed.data.status === "published" ? "draft" : parsed.data.status;
 
-		await db`
+		const inserted = await db`
 			INSERT INTO class_schedules (
 				classroom_id,
 				title,
@@ -133,7 +138,24 @@ export async function createScheduleAction(_: FormState, formData: FormData): Pr
 				${session.user.id},
 				${session.user.id}
 			)
+			RETURNING id
 		`;
+
+		const scheduleId = (inserted?.[0]?.id as string | undefined) ?? null;
+
+		if (scheduleId && imageUrls.length > 0) {
+			for (const [idx, url] of imageUrls.entries()) {
+				await db`
+					INSERT INTO class_schedule_resources (schedule_id, file_url, label, media_type)
+					VALUES (
+						${scheduleId},
+						${url},
+						${`${parsed.data.title} 사진 ${idx + 1}`},
+						'image'
+					)
+				`;
+			}
+		}
 
 		revalidatePath("/admin/class-schedules");
 		revalidatePath("/parents");

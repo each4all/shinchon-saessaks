@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { EnvironmentGallery } from "@/components/environment/EnvironmentGallery";
+import { EnvironmentSlider } from "@/components/environment/EnvironmentSlider";
+import { EnvironmentSidebar } from "@/components/environment/EnvironmentSidebar";
 import { indoorGallery } from "@/data/environment";
 
 export default function InteriorEnvironmentPage() {
@@ -23,14 +24,13 @@ export default function InteriorEnvironmentPage() {
 			</section>
 
 			<section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 sm:px-10 lg:px-12">
-				<div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/95 p-6 shadow-[var(--shadow-soft)]">
-					<p className="text-sm leading-relaxed text-muted-foreground">
-						아이들이 하루 대부분을 보내는 교실은 혼합 연령 몬테소리 철학에 맞춰 세심하게 준비되어 있습니다. 민들레·백합·개나리·장미반
-						교실을 둘러보며 아이가 생활할 공간을 확인해 보세요.
-					</p>
-				</div>
+				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+					<EnvironmentSidebar />
 
-				<EnvironmentGallery images={indoorGallery} />
+					<article className="space-y-6">
+						<EnvironmentSlider images={indoorGallery} />
+					</article>
+				</div>
 			</section>
 		</div>
 	);
