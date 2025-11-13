@@ -13,12 +13,13 @@ type GreetingPageProps = {
 	searchParams?: SearchParamsInput;
 };
 
-export default async function GreetingPage({ searchParams }: GreetingPageProps = {}) {
+export default async function GreetingPage({ searchParams }: GreetingPageProps) {
 	const tabs: GreetingProfile[] = greetingProfiles;
+	const searchInput = searchParams ?? {};
 	const resolvedSearchParams =
-		typeof searchParams === "object" && searchParams !== null && "then" in searchParams
+		typeof searchInput === "object" && searchInput !== null && "then" in searchInput
 			? await searchParams
-			: (searchParams as Record<string, string | string[]> | undefined) ?? {};
+			: (searchInput as Record<string, string | string[]>);
 	const tabParam = resolvedSearchParams.tab;
 	const requestedTab = Array.isArray(tabParam) ? tabParam[0] : tabParam ?? null;
 	const fallbackTab = tabs.find((tab) => tab.slug === "chair")?.slug ?? tabs[0]?.slug ?? "chair";
