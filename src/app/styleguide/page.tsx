@@ -254,7 +254,7 @@ function ScaleList({
 
 export default function StyleguidePage() {
 	return (
-		<div className="space-y-16 pb-24">
+		<div className="mx-auto max-w-6xl space-y-16 px-6 pb-24 sm:px-10 lg:px-12">
 			<section className="relative overflow-hidden rounded-[56px] border border-white/60 bg-white/75 px-10 py-16 shadow-[var(--shadow-ambient)]">
 				<div
 					className="absolute -left-20 top-6 h-64 w-64 rounded-full blur-3xl"

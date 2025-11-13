@@ -30,7 +30,7 @@ export default function SpecialPage() {
 					<IntroSidebar />
 
 					<article className="space-y-8">
-						<section className="rounded-[var(--radius-lg)] border border-[var(--brand-primary)]/25 bg-white/95 p-6 shadow-[var(--shadow-soft)]">
+				<section className="rounded-[0.65rem] border border-[var(--brand-primary)]/25 bg-white/95 p-6 shadow-[var(--shadow-soft)]">
 							<p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">교육 철학</p>
 							<h2 className="mt-2 text-[clamp(1.8rem,2.4vw,2.2rem)] font-semibold text-[var(--brand-primary)]">{heroTitle}</h2>
 							<p className="mt-2 text-base font-medium text-[var(--brand-navy)]">{heroSubtitle}</p>
@@ -41,14 +41,14 @@ export default function SpecialPage() {
 							</div>
 						</section>
 
-						<section>
+				<section>
 							<h3 className="text-lg font-semibold text-[var(--brand-navy)]">신촌몬테소리의 대표 프로그램</h3>
-							<div className="mt-4 grid gap-4 md:grid-cols-2">
+					<div className="mt-4 grid gap-4 md:grid-cols-2">
 								{features.map((feature) => (
-									<div
-										key={feature.title}
-										className="flex h-full flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/90 p-5 shadow-[var(--shadow-soft)]"
-									>
+							<div
+								key={feature.title}
+								className="flex h-full flex-col gap-3 rounded-[0.65rem] border border-[var(--border)] bg-white/90 p-5 shadow-[var(--shadow-soft)]"
+							>
 										<div className="flex items-center justify-between gap-3">
 											<h4 className="text-base font-semibold text-[var(--brand-navy)]">{feature.title}</h4>
 											<Badge className="rounded-full bg-[var(--brand-mint)]/40 text-[var(--brand-primary)]" variant="outline">

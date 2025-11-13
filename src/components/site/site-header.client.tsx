@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
 	useCallback,
@@ -100,6 +101,13 @@ const navTree: NavItem[] = [
 	},
 ];
 
+const themePresets = [
+	{ key: "default", label: "기본", className: null as string | null },
+	{ key: "coral", label: "코랄", className: "theme-coral" },
+	{ key: "berry", label: "베리", className: "theme-berry" },
+	{ key: "tangerine", label: "탠저린", className: "theme-tangerine" },
+];
+
 type SiteHeaderClientProps = {
 	initialSession: Session | null;
 };
@@ -153,6 +161,14 @@ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
 	const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 	const [openMenu, setOpenMenu] = useState<string | null>(null);
 	const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({});
+	const [activeTheme, setActiveTheme] = useState<string>(() => {
+		if (typeof document === "undefined") {
+			return "default";
+		}
+		const root = document.documentElement;
+		const detected = themePresets.find((preset) => preset.className && root.classList.contains(preset.className));
+		return detected?.key ?? "default";
+	});
 	const closeMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const cancelPendingClose = useCallback(() => {
@@ -187,6 +203,20 @@ useEffect(() => {
 		document.body.style.overflow = "";
 	};
 }, [isMobileNavOpen]);
+
+useEffect(() => {
+	if (typeof document === "undefined") return;
+	const root = document.documentElement;
+	themePresets.forEach((preset) => {
+		if (preset.className) {
+			root.classList.remove(preset.className);
+		}
+	});
+	const selected = themePresets.find((preset) => preset.key === activeTheme);
+	if (selected?.className) {
+		root.classList.add(selected.className);
+	}
+}, [activeTheme]);
 
 useEffect(() => {
 	if (typeof window === "undefined" || !("scrollRestoration" in window.history)) {
@@ -370,16 +400,20 @@ useEffect(() => {
 	};
 
 	return (
-		<header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/85 backdrop-blur">
-			<div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10 lg:px-12">
-				<Link href="/" className="flex flex-col">
-					<span className="font-heading text-lg font-semibold text-[var(--brand-primary)]">
+		<>
+			<header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/85 backdrop-blur">
+		<div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4 sm:px-10 lg:px-12">
+			<Link href="/" className="flex min-w-0 flex-shrink-0 items-center gap-3">
+				<Image src="/images/ideology/logo.jpg" alt="신촌몬테소리" width={44} height={44} className="rounded-full border border-[var(--border)]/60 bg-white/85 p-1" priority />
+				<div className="min-w-0 leading-tight">
+					<span className="block truncate font-heading text-base font-semibold text-[var(--brand-primary)]">
 						신촌몬테소리유치원
 					</span>
-					<span className="text-xs text-muted-foreground">Shinchon Montessori Kindergarten</span>
-				</Link>
+					<span className="block truncate text-[11px] text-muted-foreground">Shinchon Montessori Kindergarten</span>
+				</div>
+			</Link>
 
-			<nav className="relative hidden flex-nowrap items-center gap-4 text-sm font-medium text-[var(--brand-navy)] md:flex lg:gap-6">
+			<nav className="relative hidden flex-1 flex-nowrap items-center gap-4 text-sm font-medium text-[var(--brand-navy)] md:flex lg:gap-6">
 				{navTree.map((item) => {
 					const hasChildren = Boolean(item.children?.length);
 					return (
@@ -412,11 +446,24 @@ useEffect(() => {
 							}}
 							onBlur={handleDesktopBlur}
 						>
-							<Link
-								href={item.href ?? "#"}
-								className="inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-1.5 transition hover:bg-[var(--brand-mint)]/30 hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:px-3"
-							>
-								<span className="whitespace-nowrap">{item.label}</span>
+					<Link
+						href={item.href ?? "#"}
+						className="inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-1.5 transition hover:bg-[var(--brand-mint)]/30 hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:px-3"
+					>
+						<span className="flex items-center gap-1">
+							{item.label === "유치원 소개" ? (
+								<span className="inline-flex items-center justify-center">
+									<Image
+										src="/images/ideology/logo-nav.png"
+										alt="신촌몬테소리"
+										width={20}
+										height={20}
+										priority
+									/>
+								</span>
+							) : null}
+							<span className="whitespace-nowrap">{item.label}</span>
+						</span>
 								{hasChildren ? (
 									<ChevronDown
 										className={`h-3.5 w-3.5 transition-transform ${
@@ -443,9 +490,9 @@ useEffect(() => {
 				})}
 			</nav>
 
-				<div className="hidden items-center gap-2 md:flex">
-					{authAction.type === "login" ? (
-						<Button
+			<div className="hidden flex-shrink-0 items-center gap-3 md:flex">
+			{authAction.type === "login" ? (
+				<Button
 							variant="outline"
 							size="sm"
 							className="inline-flex items-center gap-1 border-[var(--border)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
@@ -564,5 +611,29 @@ useEffect(() => {
 				</>
 			) : null}
 		</header>
+
+			<div className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-2">
+				<div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-white/90 px-2 py-1 text-xs shadow-[var(--shadow-soft)] backdrop-blur">
+					<span className="px-1 text-[11px] font-semibold tracking-tight text-muted-foreground">테마</span>
+					{themePresets.map((preset) => {
+						const isActive = activeTheme === preset.key;
+						return (
+							<button
+								key={preset.key}
+								type="button"
+								onClick={() => setActiveTheme(preset.key)}
+								className={`rounded-full px-2 py-0.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1 ${
+									isActive
+										? "bg-[var(--brand-primary)] text-white"
+										: "text-[var(--brand-navy)] hover:bg-[var(--brand-mint)]/40"
+								}`}
+							>
+								{preset.label}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+		</>
 	);
 }

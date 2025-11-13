@@ -147,46 +147,27 @@ function GreetingPanel({ tab }: { tab: GreetingProfile }) {
 	);
 
 	const renderImageGrid = (className: string) => (
-		<div className={`${className} h-full ${(isPrincipalProfile || tab.slug === "teachers") ? "justify-center" : ""}`}>
-			{images.length ? (
-				images.map((slot) => (
+		<div className={`${className} gap-4 ${(isPrincipalProfile || tab.slug === "teachers") ? "justify-center" : ""}`}>
+			{images.length
+				? images.map((slot) => (
 					<figure
 						key={slot.id}
-						className={`flex h-full flex-col ${
-							isTeacherProfile
-								? "max-w-[320px] mx-auto"
-								: `rounded-[var(--radius-lg)] border border-[var(--border)] bg-white shadow-[var(--shadow-soft)] ${
-										isPrincipalProfile ? "max-w-[260px] mx-auto" : ""
-								  }`
-						}`}
+						className={`flex flex-col gap-2 ${isTeacherProfile ? "max-w-[320px] mx-auto" : isPrincipalProfile ? "max-w-[260px] mx-auto" : ""}`}
 					>
 						<div
-							className={`relative w-full ${
-								isTeacherProfile
-									? "bg-transparent"
-									: "border-b border-[var(--border)] bg-white"
-							} ${
-								isPrincipalProfile ? "h-[286px]" : tab.slug === "teachers" ? "h-[300px]" : "min-h-[340px]"
-							}`}
+							className={`relative w-full overflow-hidden rounded-[var(--radius-lg)] bg-black/5 ${isPrincipalProfile ? "h-[286px]" : tab.slug === "teachers" ? "h-[300px]" : "min-h-[340px]"}`}
 						>
 							<Image
 								src={slot.src}
 								alt={slot.alt}
 								width={600}
 								height={800}
-								className={
-									isPrincipalProfile
-										? "h-full w-auto object-cover mx-auto"
-									: tab.slug === "teachers"
-									? "h-full w-auto object-cover mx-auto"
-									: "h-full w-full object-cover"
-								}
-								style={{ borderRadius: 0 }}
+								className={(isPrincipalProfile || tab.slug === "teachers") ? "h-full w-auto object-cover mx-auto" : "h-full w-full object-cover"}
 								priority={slot.priority}
 							/>
 						</div>
 						{!isTeacherProfile && (slot.captionTitle || slot.captionDetail) ? (
-							<figcaption className="px-4 py-3 text-center text-sm text-[var(--brand-navy)]">
+							<figcaption className="px-2 text-center text-sm text-[var(--brand-navy)]">
 								{slot.captionTitle ? <p className="font-semibold">{slot.captionTitle}</p> : null}
 								{slot.captionDetail ? (
 									<p className="text-xs text-muted-foreground">{slot.captionDetail}</p>
@@ -195,11 +176,11 @@ function GreetingPanel({ tab }: { tab: GreetingProfile }) {
 						) : null}
 					</figure>
 				))
-			) : (
-				<div className="flex min-h-[320px] items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] bg-[var(--brand-mint)]/10 text-sm text-muted-foreground">
-					이미지를 등록해 주세요.
-				</div>
-			)}
+				: (
+					<div className="flex min-h-[320px] items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] bg-[var(--brand-mint)]/10 text-sm text-muted-foreground">
+						이미지를 등록해 주세요.
+					</div>
+				)}
 		</div>
 	);
 
@@ -239,7 +220,7 @@ const shouldShowHeader = !isChairProfile && !isPrincipalProfile && !isTeacherPro
 const leftColumnAlignment = isTeacherProfile ? "justify-center" : "";
 
 	return (
-		<article id={tab.slug} className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+		<article id={tab.slug} className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
 			<div className={`flex h-full flex-col gap-4 ${leftColumnAlignment}`}>
 				{shouldShowHeader ? (
 					<header className="space-y-2">

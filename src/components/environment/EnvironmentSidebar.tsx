@@ -1,26 +1,34 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { buildSidebarLinkClass, sidebarCardClass, sidebarSectionHeadingClass } from "@/components/intro/IntroSidebar";
 
 const environmentNav = [
-	{ label: "실내", href: "/environment/interior", description: "민들레·백합·개나리·장미반" },
-	{ label: "실외", href: "/environment/outside", description: "창조의 뜰·숲속놀이터" },
+    { label: "실내", href: "/environment/interior" },
+    { label: "실외", href: "/environment/outside" },
 ];
 
 export function EnvironmentSidebar() {
-	return (
-		<aside className="self-start rounded-[var(--radius-lg)] border border-[var(--brand-primary)]/20 bg-[var(--brand-mint)]/20 p-4 shadow-[var(--shadow-soft)]">
-			<p className="text-sm font-semibold text-[var(--brand-navy)]">교육환경</p>
-			<ul className="mt-4 space-y-2 text-sm text-[var(--brand-navy)]">
-				{environmentNav.map((item) => (
-					<li key={item.label}>
-						<Link
-							href={item.href}
-							className="flex flex-col rounded-[var(--radius-md)] px-3 py-2 transition hover:bg-white/80 hover:text-[var(--brand-primary)]"
-						>
-							<span className="font-semibold">{item.label}</span>
-						</Link>
-					</li>
-				))}
-			</ul>
-		</aside>
-	);
+    const pathname = usePathname();
+    const isActive = (href: string) => pathname === href || pathname?.startsWith(`${href}/`);
+
+    return (
+        <aside className={sidebarCardClass}>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">교육환경</p>
+            <div className="mt-4 space-y-2">
+                <p className={sidebarSectionHeadingClass}>공간 안내</p>
+                <ul className="space-y-1">
+                    {environmentNav.map((item) => (
+                        <li key={item.label}>
+                            <Link href={item.href} className={buildSidebarLinkClass(isActive(item.href))}>
+                                {item.label}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </aside>
+    );
 }

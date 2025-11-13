@@ -1,0 +1,51 @@
+:root.theme-coral {
+  --brand-primary: #f1554c;
+  --brand-secondary: #2e6f6c;
+  --brand-sunshine: #ffd166;
+  --brand-mint: #8dd3c7;
+  --brand-navy: #264653;
+
+  --background: #fafaff;
+  --foreground: #3e5067;
+  --card: #ffffff;
+  --card-foreground: #3e5067;
+  --popover: #ffffff;
+  --popover-foreground: #3e5067;
+
+  --surface: #fff7f4;          /* 부드러운 코랄 배경 */
+  --surface-muted: #f5f7fb;    /* 패널/탭 */
+  --surface-contrast: #fff0e7; /* 콜아웃 */
+
+  --primary: var(--brand-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--brand-secondary);
+  --secondary-foreground: #ffffff;
+
+  --muted: #f1f3f7;
+  --muted-foreground: rgba(80, 96, 120, 0.65);
+  --accent: var(--brand-sunshine);
+  --accent-foreground: #3a2a09;
+  --destructive: #de4a42;
+  --info: #4f74e8;
+  --success: #32c1a7;
+  --warning: #ffb347;
+
+  --border: #e8e8e8;
+  --input: #e8e8e8;
+  --ring: var(--brand-secondary);
+
+  --chart-1: var(--brand-primary);
+  --chart-2: var(--brand-secondary);
+  --chart-3: var(--brand-sunshine);
+  --chart-4: var(--brand-navy);
+  --chart-5: #ff9d75;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #3e5067;
+  --sidebar-primary: var(--brand-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(46, 111, 108, 0.12);
+  --sidebar-accent-foreground: #2e6f6c;
+  --sidebar-border: #e8e8e8;
+  --sidebar-ring: var(--brand-secondary);
+}

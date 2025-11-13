@@ -1,0 +1,51 @@
+:root.theme-berry {
+  --brand-primary: #d6456a;
+  --brand-secondary: #2f6b3c;
+  --brand-sunshine: #f2c94c;
+  --brand-mint: #86d49b;
+  --brand-navy: #1f2a44;
+
+  --background: #fbfbff;
+  --foreground: #344058;
+  --card: #ffffff;
+  --card-foreground: #344058;
+  --popover: #ffffff;
+  --popover-foreground: #344058;
+
+  --surface: #fff7fb;          /* 베리 빛 섹션 */
+  --surface-muted: #f2f4fb;    /* 페일 패널 */
+  --surface-contrast: #fff1f5; /* 포인트 */
+
+  --primary: var(--brand-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--brand-secondary);
+  --secondary-foreground: #ffffff;
+
+  --muted: #f2f3f6;
+  --muted-foreground: rgba(70, 80, 100, 0.65);
+  --accent: var(--brand-sunshine);
+  --accent-foreground: #3b3000;
+  --destructive: #c53c5f;
+  --info: #4f74e8;
+  --success: #35c48a;
+  --warning: #ffb347;
+
+  --border: #e8e8e8;
+  --input: #e8e8e8;
+  --ring: var(--brand-secondary);
+
+  --chart-1: var(--brand-primary);
+  --chart-2: var(--brand-secondary);
+  --chart-3: var(--brand-sunshine);
+  --chart-4: var(--brand-navy);
+  --chart-5: #f48fb1;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #344058;
+  --sidebar-primary: var(--brand-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(47, 107, 60, 0.12);
+  --sidebar-accent-foreground: #2f6b3c;
+  --sidebar-border: #e8e8e8;
+  --sidebar-ring: var(--brand-secondary);
+}

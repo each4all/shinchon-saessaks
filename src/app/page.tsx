@@ -161,33 +161,32 @@ export default async function Home() {
 		highlightedNews.length > 0 ? highlightedNews : await getNewsList({ limit: 3 });
 	return (
 		<div className="bg-[var(--background)] text-[var(--brand-navy)]">
-			<section id="hero" data-testid="hero" className="relative isolate overflow-hidden">
-				<div
-					className="pointer-events-none absolute inset-0"
-					style={{ background: "var(--gradient-cloudwalk)" }}
-				/>
-				<div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16 sm:gap-12 sm:px-10 sm:py-24 lg:px-12 lg:py-28">
-					<div className="flex flex-col gap-6 sm:max-w-3xl">
-						<Badge
-							lang="en"
-							variant="sunshine"
-							className="w-fit uppercase tracking-[0.18em]"
-						>
-							Shinchon Montessori
-						</Badge>
-						<h1 className="font-heading text-[clamp(3rem,6vw,4.5rem)] leading-[1.08] text-[var(--brand-navy)]">
-							아이의 가능성이 자연스럽게 자라는 하루를 디자인합니다.
-						</h1>
-						<p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
-							신촌몬테소리유치원은 몬테소리 철학과 프로젝트 러닝을 결합해 아이가 스스로 선택하고
-							몰입하는 배움 환경을 제공합니다. 가정과 함께 아이의 리듬을 발견하고 키워가세요.
-						</p>
-					</div>
+		<section id="hero" data-testid="hero" className="relative isolate overflow-hidden">
+			<div
+				className="pointer-events-none absolute inset-0"
+				style={{ background: "var(--gradient-cloudwalk)" }}
+			/>
+			<div className="relative mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-24 lg:px-12 lg:py-28">
+				<div className="flex flex-col gap-6 text-center sm:max-w-4xl sm:text-left">
+					<Badge
+						lang="en"
+						variant="sunshine"
+						className="mx-auto w-fit uppercase tracking-[0.18em] sm:mx-0"
+					>
+						Shinchon Montessori
+					</Badge>
+					<h1 className="font-heading text-[clamp(3rem,5.2vw,4rem)] leading-[1.05] text-[var(--brand-navy)]">
+						아이의 가능성이 자연스럽게 자라는 하루를 디자인합니다.
+					</h1>
+					<p className="mx-auto max-w-3xl text-lg leading-relaxed text-muted-foreground sm:mx-0">
+						신촌몬테소리유치원은 몬테소리 철학과 프로젝트 러닝을 결합해 아이가 스스로 선택하고 몰입하는 배움 환경을 제공합니다. 가정과 함께 아이의 리듬을 발견하고 키워가세요.
+					</p>
+				</div>
 
-					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-						<div className="flex flex-wrap gap-3">
-							<Button asChild size="lg">
-								<Link href="/#admissions">
+				<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+					<div className="flex flex-wrap gap-3">
+						<Button asChild size="lg">
+							<Link href="/#admissions">
 									입학 상담 예약하기
 									<ArrowRight className="ml-2 size-4" />
 								</Link>
@@ -201,7 +200,7 @@ export default async function Home() {
 						</p>
 					</div>
 
-					<div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
+				<div className="mt-8 grid gap-4 sm:grid-cols-3 sm:gap-6">
 						{heroStats.map((item) => (
 							<div
 								key={item.label}
