@@ -549,7 +549,7 @@ useEffect(() => {
 							<button
 								type="button"
 								className="inline-flex items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] p-2 text-[var(--brand-navy)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-								onClick={closeMobileNav}
+								onClick={() => closeMobileNav()}
 								aria-label="모바일 메뉴 닫기"
 							>
 								<X className="size-5" />
