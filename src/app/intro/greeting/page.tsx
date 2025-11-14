@@ -7,19 +7,13 @@ import { IntroSidebar } from "@/components/intro/IntroSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { greetingProfiles, type GreetingProfile } from "@/data/greetings";
 
-type SearchParamsInput = Promise<Record<string, string | string[]>> | Record<string, string | string[]>;
-
 type GreetingPageProps = {
-	searchParams?: SearchParamsInput;
+	searchParams?: Promise<Record<string, string | string[]>>;
 };
 
 export default async function GreetingPage({ searchParams }: GreetingPageProps) {
 	const tabs: GreetingProfile[] = greetingProfiles;
-	const searchInput = searchParams ?? {};
-	const resolvedSearchParams =
-		typeof searchInput === "object" && searchInput !== null && "then" in searchInput
-			? await searchParams
-			: (searchInput as Record<string, string | string[]>);
+	const resolvedSearchParams = (await searchParams) ?? {};
 	const tabParam = resolvedSearchParams.tab;
 	const requestedTab = Array.isArray(tabParam) ? tabParam[0] : tabParam ?? null;
 	const fallbackTab = tabs.find((tab) => tab.slug === "chair")?.slug ?? tabs[0]?.slug ?? "chair";
