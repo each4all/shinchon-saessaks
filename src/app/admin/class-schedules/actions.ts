@@ -141,7 +141,7 @@ export async function createScheduleAction(_: FormState, formData: FormData): Pr
 			RETURNING id
 		`;
 
-		const scheduleId = (inserted?.[0]?.id as string | undefined) ?? null;
+		const scheduleId = (inserted?.rows?.[0]?.id as string | undefined) ?? null;
 
 		if (scheduleId && imageUrls.length > 0) {
 			for (const [idx, url] of imageUrls.entries()) {
