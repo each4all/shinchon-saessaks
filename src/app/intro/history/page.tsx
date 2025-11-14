@@ -6,17 +6,12 @@ import { schoolHistories, type HistoryEntry, type HistoryRange } from "@/data/hi
 
 const historyRanges = [...schoolHistories].sort((a, b) => a.orderIndex - b.orderIndex);
 
-type SearchParamsInput = Promise<Record<string, string | string[]>> | Record<string, string | string[]>;
-
 type HistoryPageProps = {
-	searchParams?: SearchParamsInput;
+	searchParams?: Promise<Record<string, string | string[]>>;
 };
 
-export default async function HistoryPage({ searchParams }: HistoryPageProps = {}) {
-	const resolvedSearchParams =
-		typeof searchParams === "object" && searchParams !== null && "then" in searchParams
-			? await searchParams
-			: (searchParams as Record<string, string | string[]> | undefined) ?? {};
+export default async function HistoryPage({ searchParams }: HistoryPageProps) {
+	const resolvedSearchParams = (await searchParams) ?? {};
 	const rangeParam = resolvedSearchParams.range ?? resolvedSearchParams.tab;
 	const requestedRange = Array.isArray(rangeParam) ? rangeParam[0] : rangeParam ?? null;
 	const fallbackRange = historyRanges[0]?.slug ?? "modern";
