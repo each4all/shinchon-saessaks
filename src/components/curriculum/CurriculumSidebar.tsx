@@ -1,13 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-import {
-	buildSidebarLinkClass,
-	sidebarCardClass,
-	sidebarSectionHeadingClass,
-} from "@/components/intro/IntroSidebar";
+import { SectionSidebar } from "@/components/navigation/SectionSidebar";
 
 const curriculumNav = [
 	{ label: "하루일과", href: "/education/daily-schedule" },
@@ -17,35 +10,6 @@ const curriculumNav = [
 	{ label: "부모교육", href: "/education/parent-education" },
 ];
 
-function resolvePathname(href: string) {
-	try {
-		const url = new URL(href, "https://example.local");
-		return url.pathname;
-	} catch {
-		return href.split("#")[0] ?? href;
-	}
-}
-
-export function CurriculumSidebar() {
-	const pathname = usePathname();
-	const isActive = (href: string) => {
-		const target = resolvePathname(href);
-		if (!target) return false;
-		return pathname === target || pathname?.startsWith(`${target}/`);
-	};
-
-	return (
-		<aside className={sidebarCardClass}>
-			<p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">교육과정</p>
-			<ul className="mt-4 space-y-1">
-				{curriculumNav.map((item) => (
-					<li key={item.label}>
-						<Link href={item.href} className={buildSidebarLinkClass(isActive(item.href))}>
-							{item.label}
-						</Link>
-					</li>
-				))}
-			</ul>
-		</aside>
-	);
+export function CurriculumSidebar({ stickyOffset }: { stickyOffset?: number }) {
+	return <SectionSidebar title="교육과정" sections={[{ links: curriculumNav }]} stickyOffset={stickyOffset} />;
 }

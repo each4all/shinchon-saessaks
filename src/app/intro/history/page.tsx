@@ -55,7 +55,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
 						{historyRanges.map((range) => (
 							<TabsContent key={range.slug} value={range.slug} className="mt-6">
 								<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-									<IntroSidebar />
+				<IntroSidebar stickyOffset={112} />
 									<HistoryPanel range={range} />
 								</div>
 							</TabsContent>

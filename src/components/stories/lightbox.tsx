@@ -59,23 +59,6 @@ export function Lightbox({ open, items, startIndex = 0, onClose }: LightboxProps
 		setIndex(idx);
 	};
 
-	const handleThumbPointerDown = (e: React.PointerEvent<HTMLButtonElement>, idx: number) => {
-		thumbPress.current = { x: e.clientX, y: e.clientY, ts: window.performance.now(), idx };
-	};
-
-	const handleThumbPointerUp = (e: React.PointerEvent<HTMLButtonElement>, idx: number) => {
-		const start = thumbPress.current;
-		thumbPress.current = null;
-		if (!start) return;
-		const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
-		const dt = window.performance.now() - start.ts;
-		if (start.idx === idx && dist < 6 && dt < 350) {
-			e.preventDefault();
-			e.stopPropagation();
-			setIndex(idx);
-		}
-	};
-
 	const jumpFirst = () => safeItems.length && setIndex(0);
 	const jumpLast = () => safeItems.length && setIndex(safeItems.length - 1);
 
@@ -112,6 +95,23 @@ export function Lightbox({ open, items, startIndex = 0, onClose }: LightboxProps
 		const nextScroll = Math.max(0, Math.min(strip.scrollWidth - strip.clientWidth, targetCenter));
 		strip.scrollTo({ left: nextScroll, behavior: "smooth" });
 	}, [index, safeItems.length]);
+
+	const handleThumbPointerDown = (e: React.PointerEvent<HTMLButtonElement>, idx: number) => {
+		thumbPress.current = { x: e.clientX, y: e.clientY, ts: e.timeStamp, idx };
+	};
+
+	const handleThumbPointerUp = (e: React.PointerEvent<HTMLButtonElement>, idx: number) => {
+		const start = thumbPress.current;
+		thumbPress.current = null;
+		if (!start) return;
+		const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+		const dt = e.timeStamp - start.ts;
+		if (start.idx === idx && dist < 6 && dt < 350) {
+			e.preventDefault();
+			e.stopPropagation();
+			setIndex(idx);
+		}
+	};
 
 	if (!open) return null;
 
@@ -202,10 +202,10 @@ export function Lightbox({ open, items, startIndex = 0, onClose }: LightboxProps
 							<button
 								key={item.id}
 								type="button"
-								onClick={() => handleThumbClick(idx)}
 								onPointerDown={(e) => handleThumbPointerDown(e, idx)}
 								onPointerUp={(e) => handleThumbPointerUp(e, idx)}
-								className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border pointer-events-auto ${
+								onClick={() => handleThumbClick(idx)}
+								className={`pointer-events-auto relative h-16 w-24 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border ${
 									idx === index ? "border-[var(--brand-primary)] shadow-sm" : "border-[var(--border)] opacity-75"
 								}`}
 								aria-current={idx === index}

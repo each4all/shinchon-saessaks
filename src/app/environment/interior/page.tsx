@@ -25,7 +25,7 @@ export default function InteriorEnvironmentPage() {
 
 			<section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 sm:px-10 lg:px-12">
 				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-					<EnvironmentSidebar />
+					<EnvironmentSidebar stickyOffset={112} />
 
 					<article className="space-y-6">
 						<EnvironmentSlider images={indoorGallery} />

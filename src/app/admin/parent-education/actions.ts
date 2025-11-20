@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-import { initialFormState, type FormState } from "../form-state";
+import { type FormState } from "../form-state";
 
 const categoryEnum = z.enum(["parent_class", "parent_recipe", "seminar"]);
 

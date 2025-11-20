@@ -3,14 +3,12 @@ import type { Metadata } from "next";
 import { StoriesSidebar } from "@/components/stories/StoriesSidebar";
 import { ClassNewsGallery } from "@/components/stories/class-news-gallery";
 import { Badge } from "@/components/ui/badge";
-import { ageStoryTabs } from "@/data/age-stories";
 import { classStoryTabs } from "@/data/class-stories";
 import { auth } from "@/lib/auth";
 import { getClassPosts } from "@/lib/data/class-posts-repository";
 import { buildGalleryTabs, mapPostsToGalleryCards } from "@/app/stories/shared/gallery-utils";
 
 const classAllowedNames = new Set(classStoryTabs.map((tab) => tab.classroomName));
-const ageAllowedNames = new Set(ageStoryTabs.map((tab) => tab.classroomName));
 
 export const dynamic = "force-dynamic";
 
@@ -48,11 +46,6 @@ export default async function ClassNewsPage({ searchParams }: ClassNewsPageProps
   const classGalleryTabs = buildGalleryTabs(classGalleryCards, classStoryTabs);
   const defaultClassTab =
     classGalleryTabs.find((tab) => tab.posts.length > 0)?.key ?? classGalleryTabs[0]?.key ?? classStoryTabs[0]?.key ?? "gaenari";
-
-  const ageGalleryCards = canViewGallery ? mapPostsToGalleryCards(galleryPosts, ageAllowedNames) : [];
-  const ageGalleryTabs = buildGalleryTabs(ageGalleryCards, ageStoryTabs);
-  const defaultAgeTab =
-    ageGalleryTabs.find((tab) => tab.posts.length > 0)?.key ?? ageGalleryTabs[0]?.key ?? ageStoryTabs[0]?.key ?? "age-a";
 
   return (
     <div className="bg-[var(--background)] text-[var(--brand-navy)]">
@@ -97,28 +90,6 @@ export default async function ClassNewsPage({ searchParams }: ClassNewsPageProps
             />
           </section>
 
-          <section className="space-y-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/90 px-6 py-6 shadow-[var(--shadow-soft)]">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                <span className="rounded-full bg-[var(--brand-secondary)]/15 px-3 py-1 text-[var(--brand-secondary)]">Gallery</span>
-                <span>연령별 교육활동</span>
-              </div>
-              <h2 className="font-heading text-[clamp(1.8rem,3vw,2.4rem)] text-[var(--brand-navy)]">연령 그룹 앨범</h2>
-              <p className="text-sm text-muted-foreground">
-                A/B/C 그룹별 프로젝트, 문화 체험, 졸업 준비 활동을 최신 순으로 모았습니다. 카드에서 원본 사진을 이어서 살펴보세요.
-              </p>
-            </div>
-
-            <ClassNewsGallery
-              tabs={ageGalleryTabs}
-              defaultTab={defaultAgeTab}
-              isAuthenticated={isAuthenticated}
-              canViewGallery={canViewGallery}
-              isPendingParent={isParentPending}
-              defaultLoginOpen={openLogin && !isAuthenticated}
-              loginRedirectPath="/stories/class-news"
-            />
-          </section>
         </div>
       </section>
     </div>

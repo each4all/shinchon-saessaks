@@ -13,8 +13,15 @@ async function loginAs(
 	await page.goto(`/member/login?redirect=${redirectParam}`);
 	await page.getByLabel("이메일").fill(email);
 	await page.getByLabel("비밀번호").fill(password);
-	await page.getByRole("button", { name: "로그인" }).click();
-	await page.waitForLoadState("networkidle");
+	await Promise.all([
+		page.waitForLoadState("networkidle"),
+		page.getByRole("button", { name: "로그인" }).click(),
+	]);
+	// 로그인 후에도 로그인 페이지라면 한 번 더 확인
+	if (page.url().includes("/member/login")) {
+		// 쿠키가 설정됐다면 리다이렉트만 재시도
+		await page.goto(redirect);
+	}
 }
 
 test.describe("우리들 이야기 - 반별 교육활동", () => {

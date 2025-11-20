@@ -25,8 +25,8 @@ export default function LocationPage() {
 			</section>
 
 			<section className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10 lg:px-12">
-				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-					<IntroSidebar />
+			<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+				<IntroSidebar stickyOffset={112} />
 
 					<article className="space-y-6">
 						<section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/95 p-6 shadow-[var(--shadow-soft)]">

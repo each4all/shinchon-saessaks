@@ -1,6 +1,5 @@
 import { chromium, devices } from 'playwright';
 import path from 'path';
-import fs from 'fs';
 
 const baseUrl = 'http://127.0.0.1:3100';
 const outDir = path.resolve('tmp/layout');

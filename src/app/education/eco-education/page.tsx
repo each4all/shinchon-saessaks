@@ -28,7 +28,7 @@ export default function EcoEducationPage() {
 
 			<section className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10 lg:px-12">
 				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-					<CurriculumSidebar />
+					<CurriculumSidebar stickyOffset={112} />
 					<section className="rounded-[0.65rem] border border-[var(--border)] bg-white/95 p-6 shadow-[var(--shadow-soft)]">
 						<header className="space-y-4 border-b border-dashed border-[var(--border)] pb-6">
 							<p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{ecoIntro.tagline}</p>

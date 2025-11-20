@@ -26,8 +26,8 @@ export default function SpecialPage() {
 			</section>
 
 			<section className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10 lg:px-12">
-				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-					<IntroSidebar />
+			<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+				<IntroSidebar stickyOffset={112} />
 
 					<article className="space-y-8">
 				<section className="rounded-[0.65rem] border border-[var(--brand-primary)]/25 bg-white/95 p-6 shadow-[var(--shadow-soft)]">

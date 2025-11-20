@@ -37,33 +37,33 @@ export default async function GreetingPage({ searchParams }: GreetingPageProps) 
 				</div>
 			</section>
 
-			<section className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10 lg:px-12">
-				<div className="space-y-8">
-					<Tabs key={defaultValue} defaultValue={defaultValue} className="w-full">
-						<div className="flex justify-center">
-							<TabsList className="flex flex-wrap items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-white/80 px-3 py-2 shadow-[var(--shadow-soft)]">
-								{tabs.map((tab) => (
-									<TabsTrigger
-										key={tab.slug}
-										value={tab.slug}
-										className="min-w-[120px] rounded-[var(--radius-md)] border border-transparent px-3 py-1.5 text-sm font-semibold data-[state=active]:border-[var(--brand-primary)] data-[state=active]:bg-[var(--brand-mint)]/20"
-									>
-										{tab.label}
-									</TabsTrigger>
-								))}
-							</TabsList>
-						</div>
-
-					{tabs.map((tab) => (
-						<TabsContent key={tab.slug} value={tab.slug} className="mt-6">
-							<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-								<IntroSidebar />
-								<GreetingPanel tab={tab} />
+			<section className="mx-auto max-w-6xl px-6 py-12 sm:px-10 lg:px-12">
+				<div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+					<IntroSidebar stickyOffset={112} />
+					<div className="space-y-8">
+						<Tabs key={defaultValue} defaultValue={defaultValue} className="w-full">
+							<div className="flex justify-center lg:justify-start">
+								<TabsList className="flex flex-wrap items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-white/80 px-3 py-2 shadow-[var(--shadow-soft)]">
+									{tabs.map((tab) => (
+										<TabsTrigger
+											key={tab.slug}
+											value={tab.slug}
+											className="min-w-[120px] rounded-[var(--radius-md)] border border-transparent px-3 py-1.5 text-sm font-semibold data-[state=active]:border-[var(--brand-primary)] data-[state=active]:bg-[var(--brand-mint)]/20"
+										>
+											{tab.label}
+										</TabsTrigger>
+									))}
+								</TabsList>
 							</div>
-						</TabsContent>
-					))}
-				</Tabs>
-			</div>
+
+							{tabs.map((tab) => (
+								<TabsContent key={tab.slug} value={tab.slug} className="mt-6">
+									<GreetingPanel tab={tab} />
+								</TabsContent>
+							))}
+						</Tabs>
+					</div>
+				</div>
 			</section>
 		</div>
 	);

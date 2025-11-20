@@ -273,6 +273,3 @@ export const nutritionBulletins = pgTable("nutrition_bulletins", {
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
-
-type GreetingPersonRow = { name: string; role?: string | null };
-type GreetingHighlightRow = { text: string; source?: string | null };
