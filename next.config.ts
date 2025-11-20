@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
 				protocol: "https",
 				hostname: "www.shinchonkid.com",
 			},
+			{
+				protocol: "http",
+				hostname: "www.shinchonkid.com",
+			},
 		],
 	},
 	async redirects() {

@@ -180,6 +180,16 @@
    - 반 소식/급식 폼에 프런트 노출 예시와 필드 매핑 가이드를 추가해 운영자가 입력 결과를 즉시 파악할 수 있도록 지원.
 
 ## History Log
+- 2025-11-20 — 갤러리 라이트박스 전환: 카드 그리드 + 공통 라이트박스로 재구성하고, 썸네일 휠/드래그 가로 스크롤·활성 썸네일 중앙 정렬·Home/End/←/→ 지원으로 다량 이미지 탐색을 단순화했다. 페이드/드래그 오동작 제거, 썸네일·제목·설명을 이미지 하단에 분리해 가려짐 문제를 해결.
+  - 2025-11-20 — 라이트박스 내비 보완: 메인 이미지 클릭 전환 제거(화살표/썸네일/키보드 중심), 썸네일 중앙 정렬·메타 표시 유지, 썸네일 드래그 차단 로직 제거·포인터 이벤트 보강으로 클릭 전환 안정화.
+- 2025-11-20 — 교육행사 데이터/UX 고도화: Legacy 교육행사 12건을 Playwright로 재수집해 `class_schedules`에 보호자 공개 범위와 친근한 설명을 저장하고 중복 식별(`LEGACY_EVENT_ID`)·`--refresh` 옵션을 `scripts/import-legacy-events.ts`에 추가했으며, `/stories/events` 카드/모달 카피와 썸네일 스크롤 UI를 반별·연령 갤러리 패턴과 맞췄습니다.
+- 2025-11-16 — Legacy 몬테소리 교육 페이지 내용을 `/education/montessori`로 재구성하고 이미지 플레이스홀더·데이터 소스를 추가, CurriculumSidebar 경로와 Playwright 회귀 테스트를 업데이트해 신규 교육과정 뷰를 안정화.
+- 2025-11-16 — Legacy 기독교 유아교육 페이지를 `/education/christian-education`으로 이관하여 소개·핵심 기둥·컴패션 후원 탭 UI를 구축하고, 후원 어린이 사진/데이터와 헤더/사이드바 링크·Playwright 테스트를 동기화.
+- 2025-11-16 — Legacy 생태 유아교육 페이지를 `/education/eco-education`으로 이관해 소개 문단·활동 카드·사진 플레이스홀더를 재구성하고, 네비게이션/사이드바 링크 및 Playwright 테스트를 업데이트.
+- 2025-11-16 — 부모교육 1단계 UI 스캐폴딩: `/education/parent-education` 페이지, 더미 데이터, 탭/게시판/검색/페이징 플레이스홀더, 네비게이션 경로, Playwright 테스트(`tests/parent-education.spec.ts`)를 추가해 향후 DB/어드민 연동 기반을 마련.
+- 2025-11-16 — 부모교육 2단계(DB/API): Drizzle 스키마·마이그레이션(`parent_education_posts/attachments`), 데이터 레이어(`src/lib/data/parent-education-repository.ts`), 목록/상세 API(`/api/parent-education`, `/api/parent-education/[slug]`)를 추가해 후속 어드민·UI 연동 준비 완료.
+- 2025-11-16 — 부모교육 3단계(어드민·상세 연동): `/admin/parent-education` CRUD UI와 서버 액션, `/education/parent-education` 목록의 DB 데이터/검색/페이지네이션, `/education/parent-education/[slug]` 상세 페이지, 조회수 증가 액션, Playwright 스펙 업데이트로 전체 흐름을 DB 기반으로 전환.
+- 2025-11-16 — 우리들 이야기 개선: `src/data/class-stories.ts`에 반별 갤러리 데이터를 (개나리/민들레/백합/장미/방과후) 정의하고 `/stories/class-news` 상단에 shadcn Tabs+갤러리를 추가해 반별 활동 탭 미리보기 제공, 로그인 상태에 따라 CTA가 전환되며 테이블 앵커와 갤러리 카드 높이를 통일.
 - 2025-10-29 — 상단 네비게이션을 Legacy 용어·경로(유치원 소개/교육환경/교육과정/우리들 이야기/신촌소식/오늘의 식단)로 재배치하고 홈에 `#environment` 섹션을 추가해 교육환경 안내를 제공.
 - 2025-10-29 — 급식 페이지(학부모/퍼블릭)를 월간 표 + 상세 패널 구조로 재구성하여 기존 “오늘의 식단” 흐름을 유지하면서 사진·첨부 미리보기를 제공.
 - 2025-10-29 — 반 소식 Stage 3: `/parents/posts`를 테이블형 게시판으로 전환하고 상세 페이지를 라이트박스 모달로 개편해 Legacy UX를 보존하면서 최신 스타일을 적용.
@@ -301,3 +311,268 @@
   }
   ```
 - 2025-10-29 — Legacy 구조와의 괴리를 줄이기 위한 재정렬 계획 합의 (네비게이션 복구, 급식 테이블·팝업 유지, 반 소식 테이블/모달 전환) 및 다음 단계(네비게이션→급식→반 소식→로그인 흐름→관리자 안내) 작업 순서를 정의.
+
+---
+
+## Web Standards & Build Guardrails (Next.js 전용 / 추가 섹션)
+
+> 이 섹션은 **빌드 안정성**과 **웹 표준 준수**만을 다룹니다. React 19 고유 API 내용은 포함하지 않습니다.
+
+### A) Build: Fail‑Fast 파이프라인
+- **패키지 스크립트(권장)** — 경고도 실패 처리하여 일관된 빌드를 보장합니다.
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prebuild": "node scripts/check-env.mjs",
+    "build": "npm run lint && npm run typecheck && next build",
+    "start": "next start"
+  },
+  "engines": { "node": ">=18.18" }
+}
+```
+
+- **환경 변수 검증** — 누락 시 빌드 실패(서버/클라이언트 공통).
+```js
+// scripts/check-env.mjs
+const REQUIRED = [
+  // 예시: 'NEXT_PUBLIC_SITE_URL', 'DATABASE_URL', 'AUTH_SECRET'
+];
+const missing = REQUIRED.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error("[check-env] Missing env:", missing.join(", "));
+  process.exit(1);
+}
+console.log("[check-env] OK");
+```
+
+- **CI 예시(GitHub Actions)** — PR에서 반드시 타입/린트/빌드가 통과해야 머지됩니다.
+```yaml
+# .github/workflows/ci.yml
+name: CI
+on: [pull_request, push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20' # LTS 권장
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+```
+
+### B) Next.js 안전 기본값
+- **`next.config.ts`** — 보안/정합성 기본값만 설정합니다.
+```ts
+// next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+  experimental: { typedRoutes: true },
+  images: {
+    // 필요 시 도메인 화이트리스트: domains: ["www.shinchonkid.com"]
+  },
+};
+
+export default nextConfig;
+```
+
+- **캐싱 규칙(요약)**  
+  - 읽기 페이지: 적절한 ISR 주기(`export const revalidate = 300`)를 명시해 정적화 + 갱신.
+  - 수정/생성 API(Route Handler): **`cache: "no-store"`**로 명시하고, 변경 후 **`revalidateTag(...)`** 또는 **`revalidatePath(...)`**로 읽기 캐시 무효화.
+
+### C) 의미론 & 접근성 (웹 표준, WCAG 2.2 AA)
+
+> Next.js 기반 웹에서 **의미론적 마크업**과 **키보드·스크린리더 접근성**을 보장하기 위한 최소 준수 가이드입니다. 설치 지침 없이 작업 코드/리뷰 기준만 규정합니다.
+
+#### C-1. 문서 구조 / 랜드마크
+- 레이아웃 기본: `<header> → <nav> → <main id="main-content"> → <footer>` 를 유지합니다.
+- 페이지 언어/문서 정보:
+  - `<html lang="ko">` 를 명시합니다.
+  - `metadata`(App Router)로 제목·설명을 설정합니다.
+- “본문 바로가기” 링크를 최상단에 두고 키보드 초점에 표시합니다.
+```tsx
+// src/app/layout.tsx
+export const metadata = { title: "신촌몬테소리유치원", description: "유치원 소개 및 학부모 포털" };
+
+const RootLayout = ({ children }: { children: React.ReactNode }) => {
+	return (
+		<html lang="ko">
+			<body>
+				<a href="#main-content" className="sr-only focus:not-sr-only">본문 바로가기</a>
+				<header>{/* ... */}</header>
+				<nav aria-label="주요">{/* ... */}</nav>
+				<main id="main-content">{children}</main>
+				<footer>{/* ... */}</footer>
+			</body>
+		</html>
+	);
+};
+
+export default RootLayout;
+```
+
+#### C-2. 인터랙션 요소
+- **버튼은 항상 `<button>`** 을 사용합니다. 폼 외부 버튼은 `type="button"` 을 명시합니다.
+- 진행/요청 중에는 **`disabled + aria-busy`** 로 중복 클릭을 방지합니다.
+- 토글형 버튼은 상태를 **`aria-pressed`** 로 노출합니다.
+```tsx
+// src/components/Button.tsx
+type Props = JSX.IntrinsicElements["button"] & { pending?: boolean };
+
+const Button = ({ pending = false, children, type = "button", ...rest }: Props) => {
+	return (
+		<button type={type} disabled={pending || rest.disabled} aria-busy={pending} {...rest}>
+			{pending ? "처리 중…" : children}
+		</button>
+	);
+};
+
+export default Button;
+```
+
+#### C-3. 폼 / 오류 / 라이브 영역
+- 모든 입력은 `<label for>` ↔ `id` 를 매핑합니다. 시각적 레이블 대신 placeholder만 두지 않습니다.
+- 검증 오류는 **`role="alert"`** 로 알리고, 폼의 성공/진행 메시지는 **`aria-live="polite"`** 를 고려합니다.
+```tsx
+// src/components/SimpleForm.tsx
+const SimpleForm = () => {
+	const [error, setError] = useState<string | null>(null);
+
+	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		try {
+			// 서버 호출 또는 클라이언트 검증 로직…
+			setError(null);
+		} catch {
+			setError("저장 중 오류가 발생했습니다.");
+		}
+	};
+
+	return (
+		<form onSubmit={onSubmit} aria-describedby={error ? "form-error" : undefined}>
+			<label htmlFor="name">이름</label>
+			<input id="name" name="name" required />
+			<button type="submit">저장</button>
+			{error && (
+				<p id="form-error" role="alert" aria-live="assertive">
+					{error}
+				</p>
+			)}
+		</form>
+	);
+};
+
+export default SimpleForm;
+```
+
+#### C-4. 내비게이션 / 링크
+- 내부 페이지 이동은 **`<Link>`** 를 사용해 접근성과 퍼포먼스를 보장합니다.
+- 새 창 열기 시 `rel="noopener noreferrer"` 를 함께 설정하고, 시각적으로 “(새 창)” 안내를 제공합니다.
+
+#### C-5. 이미지 / 미디어
+- 정보 전달용 이미지는 **의미 있는 `alt`** 를 제공합니다. 장식용은 빈 `alt=""` 로 스크린리더 무시.
+- 영상/오디오에는 자막/대체 텍스트를 제공합니다(필요 시 캡션 파일 연동).
+
+#### C-6. 표(테이블) / 데이터 그리드
+- 표에는 `<caption>` 으로 목적을 설명하고, 헤더 셀에는 `scope="col|row"` 를 명시합니다.
+```tsx
+// src/components/MealsTable.tsx
+const MealsTable = ({ days }: { days: { date: string; menu: string }[] }) => {
+	return (
+		<table>
+			<caption>이번 달 식단</caption>
+			<thead>
+				<tr>
+					<th scope="col">날짜</th>
+					<th scope="col">메뉴</th>
+				</tr>
+			</thead>
+			<tbody>
+				{days.map((d) => {
+					return (
+						<tr key={d.date}>
+							<td>{d.date}</td>
+							<td>{d.menu}</td>
+						</tr>
+					);
+				})}
+			</tbody>
+		</table>
+	);
+};
+
+export default MealsTable;
+```
+
+#### C-7. 포커스 / 키보드
+- 키보드만으로 모든 인터랙션이 가능해야 합니다. `focus-visible` 기반 포커스 링을 숨기지 않습니다.
+- 모달/오버레이는 **포커스 트랩**을 적용하고 닫힐 때 **트리거로 포커스 복귀**합니다.
+
+#### C-8. 색상 대비 / 모션
+- 텍스트 대비 **4.5:1 이상**(큰 텍스트 3:1). 배경-포커스링 대비도 확보합니다.
+- 과도한 모션은 `prefers-reduced-motion` 을 존중합니다.
+
+#### C-9. Next.js 캐싱과 접근성의 조화
+- 읽기 페이지는 ISR(`export const revalidate = ...`)을 사용하되, 콘텐츠 변경 후 **`revalidateTag/Path`** 로 즉시 최신 상태를 반영합니다.
+- 접근성 알림(예: 저장 성공 토스트)은 클라이언트에서 라이브 영역으로 보완합니다.
+
+#### C-10. 리뷰 & 테스트 체크리스트 (PR 필수)
+- [ ] 랜드마크/헤딩 계층이 논리적이다. `main` 영역이 하나이며 “본문 바로가기”가 동작한다.
+- [ ] 버튼/링크 역할이 올바르다. 버튼은 `<button>`, 내비게이션은 `<Link>`.
+- [ ] 폼 레이블/에러 공지가 스크린리더에 노출된다(`label`, `role="alert"`).
+- [ ] 이미지 `alt` 가 적절하다(장식용은 빈 alt).
+- [ ] 키보드만으로 모든 상호작용이 가능하고, 포커스 링이 항상 보인다.
+- [ ] 표는 `caption` 과 `scope` 를 포함한다.
+- [ ] 내부 이동은 `<Link>` 사용, 새 창 링크는 새 창 안내와 `rel` 설정을 포함한다.
+- [ ] 접근성 기반 테스트 1건 이상(Testing Library `getByRole` 권장).
+
+### D) 네트워크 중복 요청 방지
+- **Single‑Flight**: 동일 키(메서드+URL+쿼리)의 동시 요청은 하나로 합칩니다.
+```ts
+// src/lib/singleFlight.ts
+type AnyPromise<T> = Promise<T>;
+const inflight = new Map<string, AnyPromise<unknown>>();
+
+export const singleFlight = async <T>(key: string, fn: () => Promise<T>): Promise<T> => {
+  const ex = inflight.get(key);
+  if (ex) return ex as AnyPromise<T>;
+  const p = fn().finally(() => { inflight.delete(key); });
+  inflight.set(key, p as AnyPromise<unknown>);
+  return p;
+};
+```
+- **AbortController**: 검색어 변경/탭 전환 시 이전 요청을 취소합니다.
+```ts
+// src/lib/abortableFetch.ts
+export const abortableFetch = () => {
+  let controller: AbortController | null = null;
+
+  const run = async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (controller) controller.abort("stale");
+    controller = new AbortController();
+    return fetch(input, { ...init, signal: controller.signal });
+  };
+
+  return { run };
+};
+```
+
+### E) PR 체크리스트(필수)
+- [ ] `next build` 무경고/무오류, `tsc --noEmit` 통과, ESLint/Prettier 통과
+- [ ] 버튼/폼에 중복 요청 방지(가드·Single‑Flight·취소 중 1+) 반영
+- [ ] 시맨틱 랜드마크/헤딩 구조, 라벨-입력 매핑, 포커스 링 노출, 이미지 `alt` 확인
+- [ ] 내부 이동은 `<Link>` 사용(브라우저 기본 동작 방해 금지)
+- [ ] 읽기 경로 ISR 주기 명시, 갱신 시 `revalidate*`로 캐시 무효화
+
+# 히스토리(추가)
+- 2025-11-16 — **Web Standards & Build Guardrails(Next.js 전용) 섹션 추가** — 빌드 실패 방지 스크립트/CI, 의미론·접근성 체크리스트, 버튼 중복 요청 방지, 캐싱/무효화 규칙을 정리.

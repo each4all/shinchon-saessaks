@@ -24,6 +24,7 @@ import {
 import type { Session } from "next-auth";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type NavItem = {
 	label: string;
@@ -62,13 +63,13 @@ const navTree: NavItem[] = [
 	},
 	{
 		label: "교육과정",
-		href: "/#programs",
+		href: "/education/daily-schedule",
 		children: [
-			{ label: "하루일과", href: "/#daily-routine" },
-			{ label: "몬테소리 교육", href: "/#montessori" },
-			{ label: "기독교 유아교육", href: "/#christian-education" },
-			{ label: "생태 유아교육", href: "/#eco-education" },
-			{ label: "부모교육", href: "/#parent-program" },
+			{ label: "하루일과", href: "/education/daily-schedule" },
+			{ label: "몬테소리 교육", href: "/education/montessori" },
+			{ label: "기독교 유아교육", href: "/education/christian-education" },
+			{ label: "생태 유아교육", href: "/education/eco-education" },
+			{ label: "부모교육", href: "/education/parent-education" },
 		],
 	},
 	{
@@ -76,7 +77,7 @@ const navTree: NavItem[] = [
 		href: "/stories/class-news",
 		children: [
 			{ label: "반별 교육활동", href: "/stories/class-news" },
-			{ label: "연령별 교육활동", href: "/stories/class-news#age" },
+			{ label: "연령별 교육활동", href: "/stories/age-news" },
 			{ label: "교육행사", href: "/stories/events" },
 		],
 	},
@@ -100,6 +101,21 @@ const navTree: NavItem[] = [
 		],
 	},
 ];
+
+function isActivePath(currentPath: string | null, href?: string) {
+	if (!href || !currentPath) return false;
+	try {
+		const target = new URL(href, "https://example.local");
+		const normalize = (path: string) => (path === "/" ? "/" : path.replace(/\/$/, ""));
+		const normalizedCurrent = normalize(currentPath);
+		const targetPath = normalize(target.pathname);
+		return (
+			normalizedCurrent === targetPath || normalizedCurrent.startsWith(`${targetPath}/`)
+		);
+	} catch {
+		return false;
+	}
+}
 
 const themePresets = [
 	{ key: "default", label: "기본", className: null as string | null },
@@ -190,9 +206,15 @@ export function SiteHeaderClient({ initialSession }: SiteHeaderClientProps) {
 
 	const pathname = usePathname();
 	const { data: clientSession, status } = useSession();
-	const session = status === "loading" ? initialSession : clientSession ?? initialSession;
-	const isAdmin = session?.user?.role === "admin";
+	const hasServerSession = Boolean(initialSession?.user?.id);
+	const session =
+		status === "authenticated"
+			? clientSession
+			: status === "loading" && hasServerSession
+				? initialSession
+				: null;
 	const isAuthenticated = Boolean(session?.user?.id);
+	const isAdmin = session?.user?.role === "admin";
 	const isAdminRoute = pathname?.startsWith("/admin") ?? false;
 	const isParentsRoute = pathname?.startsWith("/parents") ?? false;
 	const userStatus = session?.user?.status;
@@ -359,12 +381,16 @@ useEffect(() => {
 		const isExpanded = mobileExpanded[key];
 		const contentId = `mobile-nav-${key.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
+		const isActive = isActivePath(pathname ?? null, item.href);
 		return (
 			<div key={key} className="space-y-2">
 				<div className="flex items-start justify-between gap-2">
 					<Link
 						href={item.href ?? "#"}
-						className="flex-1 text-base font-medium text-[var(--brand-navy)]"
+						className={cn(
+							"flex-1 text-base font-medium",
+							isActive ? "text-[var(--brand-primary)]" : "text-[var(--brand-navy)]",
+						)}
 						onClick={() => closeMobileNav(true)}
 					>
 						{item.label}
@@ -416,6 +442,7 @@ useEffect(() => {
 			<nav className="relative hidden flex-1 flex-nowrap items-center gap-4 text-sm font-medium text-[var(--brand-navy)] md:flex lg:gap-6">
 				{navTree.map((item) => {
 					const hasChildren = Boolean(item.children?.length);
+					const isActive = isActivePath(pathname ?? null, item.href);
 					return (
 						<div
 							key={item.label}
@@ -448,22 +475,13 @@ useEffect(() => {
 						>
 					<Link
 						href={item.href ?? "#"}
-						className="inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-1.5 transition hover:bg-[var(--brand-mint)]/30 hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:px-3"
+						className={cn(
+							"inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-1.5 transition hover:bg-[var(--brand-mint)]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:px-3",
+							isActive ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-[var(--brand-navy)]",
+						)}
+						aria-current={isActive ? "page" : undefined}
 					>
-						<span className="flex items-center gap-1">
-							{item.label === "유치원 소개" ? (
-								<span className="inline-flex items-center justify-center">
-									<Image
-										src="/images/ideology/logo-nav.png"
-										alt="신촌몬테소리"
-										width={20}
-										height={20}
-										priority
-									/>
-								</span>
-							) : null}
-							<span className="whitespace-nowrap">{item.label}</span>
-						</span>
+						<span className="whitespace-nowrap">{item.label}</span>
 								{hasChildren ? (
 									<ChevronDown
 										className={`h-3.5 w-3.5 transition-transform ${

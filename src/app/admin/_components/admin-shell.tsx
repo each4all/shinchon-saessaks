@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Bell,
+	BookOpen,
 	CalendarDays,
 	Database,
 	FileText,
@@ -57,6 +58,7 @@ const NAV_SECTIONS: NavSection[] = [
 		title: "자료 · 리소스",
 		items: [
 			{ label: "서식 · 운영위 자료", href: "/admin/parent-resources", icon: FileText, allowedRoles: ["admin"] },
+			{ label: "부모교육", href: "/admin/parent-education", icon: BookOpen, allowedRoles: ["admin"] },
 			{ label: "급식 · 영양 관리", href: "/admin/meals", icon: UtensilsCrossed, allowedRoles: ["admin", "nutrition"] },
 		],
 	},

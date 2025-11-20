@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CalendarDays, Lock, LogIn } from "lucide-react";
 
@@ -21,12 +22,16 @@ type ClassNewsPublicTableProps = {
 	items: ClassPostPreview[];
 	defaultLoginOpen?: boolean;
 	redirectPath: string;
+	portalPath: string;
+	isAuthenticated: boolean;
 };
 
 export function ClassNewsPublicTable({
 	items,
 	defaultLoginOpen = false,
 	redirectPath,
+	portalPath,
+	isAuthenticated,
 }: ClassNewsPublicTableProps) {
 	const [isLoginOpen, setIsLoginOpen] = useState(defaultLoginOpen);
 
@@ -53,31 +58,39 @@ export function ClassNewsPublicTable({
 
 	return (
 		<>
-			<div className="space-y-6">
-				<div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-white/80 px-4 py-4 text-xs text-muted-foreground">
-					<div className="flex items-center gap-2">
-						<Lock className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden />
-						<span>
-							반별 게시글은 로그인 후 열람 가능합니다. 목록은 최근 게시 순으로 최대 12건까지 보여줍니다.
-						</span>
-					</div>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						className="border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
-						onClick={() => setIsLoginOpen(true)}
-					>
-						<LogIn className="mr-1 h-3.5 w-3.5" aria-hidden />
-						로그인하고 전체 보기
-					</Button>
-				</div>
+		<div className="space-y-6">
+		<div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-white/80 px-4 py-4 text-xs text-muted-foreground">
+			<div className="flex items-center gap-2">
+				<Lock className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden />
+				<span>
+					반별 게시글은 로그인 후 열람 가능합니다. 목록은 최근 게시 순으로 최대 12건까지 보여줍니다.
+				</span>
+			</div>
+			{isAuthenticated ? (
+				<Button variant="outline" size="sm" className="border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10" asChild>
+					<Link href={portalPath}>학부모 포털 바로가기</Link>
+				</Button>
+			) : (
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					className="border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+					onClick={() => setIsLoginOpen(true)}
+				>
+					<LogIn className="mr-1 h-3.5 w-3.5" aria-hidden />
+					로그인하고 전체 보기
+				</Button>
+			)}
+		</div>
 
 				{hasItems ? (
 					<Table>
-						<TableCaption className="px-4 text-left text-xs text-muted-foreground">
-							제목을 선택하면 로그인 창이 열립니다. 승인된 학부모/교직원은 로그인을 완료하면 바로 학부모 포털로 이동합니다.
-						</TableCaption>
+					<TableCaption className="px-4 text-left text-xs text-muted-foreground">
+						{isAuthenticated
+							? "학부모 포털에서 최신 사진과 활동일지를 확인해 보세요."
+							: "제목을 선택하면 로그인 창이 열립니다. 승인된 학부모/교직원은 로그인 후 바로 학부모 포털로 이동합니다."}
+					</TableCaption>
 						<TableHeader className="bg-[rgba(241,239,255,0.7)]">
 							<TableRow className="text-xs uppercase tracking-[0.18em] text-[var(--brand-navy)]/70">
 								<TableHead className="w-16 text-center">No.</TableHead>
@@ -94,13 +107,22 @@ export function ClassNewsPublicTable({
 										{row.classroomName ?? "반 미지정"}
 									</TableCell>
 									<TableCell className="py-4 text-sm">
-										<button
-											type="button"
-											onClick={() => setIsLoginOpen(true)}
-											className="text-left text-[var(--brand-primary)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-										>
-											{row.title}
-										</button>
+							{isAuthenticated ? (
+								<Link
+									href={portalPath}
+									className="text-left text-[var(--brand-primary)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+								>
+									{row.title}
+								</Link>
+							) : (
+								<button
+									type="button"
+									onClick={() => setIsLoginOpen(true)}
+									className="text-left text-[var(--brand-primary)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+								>
+									{row.title}
+								</button>
+							)}
 										{row.summary ? (
 											<p className="mt-2 line-clamp-2 text-xs leading-snug text-muted-foreground">{row.summary}</p>
 										) : null}
@@ -111,13 +133,13 @@ export function ClassNewsPublicTable({
 						</TableBody>
 					</Table>
 				) : (
-					<p className="rounded-[var(--radius-md)] border border-[var(--border)] bg-white/80 px-4 py-12 text-center text-sm text-muted-foreground">
+				<p className="rounded-[var(--radius-md)] border border-[var(--border)] bg-white/80 px-4 py-12 text-center text-sm text-muted-foreground">
 						전체 공개 범위로 게시된 반 소식이 아직 없습니다. 로그인 후 학부모 포털에서 더 많은 소식을 확인하실 수 있습니다.
 					</p>
 				)}
 			</div>
 
-			<section className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/85 px-6 py-6 text-sm text-muted-foreground shadow-[var(--shadow-soft)] sm:grid-cols-2">
+		<section className="mt-6 grid gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-white/85 px-6 py-6 text-sm text-muted-foreground shadow-[var(--shadow-soft)] sm:grid-cols-2">
 				<div className="flex items-start gap-3">
 					<CalendarDays className="mt-1 h-5 w-5 text-[var(--brand-primary)]" aria-hidden />
 					<div>
@@ -138,7 +160,9 @@ export function ClassNewsPublicTable({
 				</div>
 			</section>
 
+		{!isAuthenticated ? (
 			<LoginModal open={isLoginOpen} onClose={() => setIsLoginOpen(false)} redirectTo={redirectPath} />
+		) : null}
 		</>
 	);
 }

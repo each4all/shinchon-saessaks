@@ -23,6 +23,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { dailyRhythm } from "@/data/curriculum";
 import { newsCategories, type NewsPost } from "@/lib/data/news";
 import { getHighlightedNews, getNewsList } from "@/lib/data/news-repository";
 
@@ -74,15 +75,6 @@ const programTracks = [
 			"통합 탐구 주제를 통해 초등 전환을 준비하고, 리더십과 발표력을 기르는 심화 과정.",
 		focus: ["융합 프로젝트", "발표·기록 역량", "초등 연계"],
 	},
-];
-
-// Ref: 신촌몬테소리유치원_웹사이트_개선_요구사항_명세서.md:505-560 (하루 일과 소개 요구사항)
-const dailyRhythm = [
-	{ time: "08:30", title: "등원 & 워밍업", description: "자유선택 활동으로 하루의 정서를 안정시키고 교사와 라포를 쌓아요." },
-	{ time: "10:00", title: "Montessori Work Cycle", description: "교구 탐색·소그룹 레슨을 통해 주제와 흥미에 맞춘 개별 학습을 진행해요." },
-	{ time: "12:00", title: "점심 & 야외 놀이", description: "바른 식습관을 돕는 식사와 정원·옥상 놀이터에서의 움직임 활동이 이어집니다." },
-	{ time: "13:30", title: "프로젝트 & 감성 시간", description: "생태·예술·음악 프로젝트와 이야기 상호작용으로 사고력과 감성을 키워요." },
-	{ time: "15:00", title: "하원 & 가정 연계", description: "알림장을 통해 가정과 공유하며 하루의 배움이 집으로 자연스럽게 이어집니다." },
 ];
 
 const environmentHighlights = [

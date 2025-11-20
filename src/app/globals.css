@@ -276,4 +276,14 @@
   .bg-surface         { background: var(--surface); }
   .bg-surface-muted   { background: var(--surface-muted); }
   .bg-surface-contrast{ background: var(--surface-contrast); }
+
+  /* 스크롤바 숨김 유틸 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

@@ -50,6 +50,20 @@
       "when": 1763020000000,
       "tag": "0009_drop_greeting_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1763275200000,
+      "tag": "0010_parent_education",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1763287089946,
+      "tag": "0008_superb_stepford_cuckoos",
+      "breakpoints": true
     }
   ]
 }

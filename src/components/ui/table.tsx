@@ -52,12 +52,17 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
 	);
 }
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+interface TableRowProps extends React.ComponentProps<"tr"> {
+	disableHover?: boolean;
+}
+
+function TableRow({ className, disableHover = false, ...props }: TableRowProps) {
 	return (
 		<tr
 			data-slot="table-row"
 			className={cn(
-				"border-b transition-colors hover:bg-[rgba(129,87,236,0.07)] data-[state=selected]:bg-[rgba(255,72,65,0.12)]",
+				"border-b transition-colors data-[state=selected]:bg-[rgba(255,72,65,0.12)]",
+				!disableHover && "hover:bg-[rgba(129,87,236,0.07)]",
 				className,
 			)}
 			{...props}

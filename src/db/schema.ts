@@ -175,6 +175,39 @@ export const classroomTeachers = pgTable("classroom_teachers", {
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const parentEducationCategoryEnum = pgEnum("parent_education_category", [
+	"parent_class",
+	"parent_recipe",
+	"seminar",
+]);
+
+export const parentEducationPosts = pgTable("parent_education_posts", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	slug: text("slug").notNull().unique(),
+	title: text("title").notNull(),
+	summary: text("summary"),
+	content: text("content"),
+	category: parentEducationCategoryEnum("category").notNull().default("parent_recipe"),
+	audienceScope: text("audience_scope").notNull().default("parents"),
+	isPublished: boolean("is_published").notNull().default(false),
+	publishAt: timestamp("publish_at"),
+	viewCount: integer("view_count").notNull().default(0),
+	createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+	updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const parentEducationAttachments = pgTable("parent_education_attachments", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	postId: uuid("post_id")
+		.notNull()
+		.references(() => parentEducationPosts.id, { onDelete: "cascade" }),
+	fileUrl: text("file_url").notNull(),
+	label: text("label"),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const parentResources = pgTable("parent_resources", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	title: text("title").notNull(),
